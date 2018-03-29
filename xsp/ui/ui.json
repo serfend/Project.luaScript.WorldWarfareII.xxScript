@@ -1,0 +1,76 @@
+{
+   "style" : "default",
+   "config" : "Miao_test.dat",
+   "width" : 540,
+   "height" : 960,
+   "cancelscroll" : true,
+   "countdown" : 99,
+   "cancelname" : "取消",
+   "okname" : "确定",
+   "views" : [
+      {
+         "text" : "内政建设",
+         "type" : "Page",
+         "views" : [
+            {
+               "align" : "left",
+               "color" : "0,0,0",
+               "size" : "20",
+               "text" : "版本:0.0.1",
+               "bg" : "225,225,225",
+               "type" : "Label"
+            },
+            {
+               "align" : "left",
+               "color" : "0,0,0",
+               "size" : "16",
+               "text" : "发展政策",
+               "bg" : "255,255,255",
+               "type" : "Label"
+            },
+            {
+               "id" : "useDevelopPolicy",
+               "list" : "经济中心,战争中心,防御中心",
+               "select" : "0",
+               "size" : "16",
+               "type" : "RadioGroup",
+               "orientation" : "horizontal",
+               "color" : "0,0,225"
+            },
+			{
+	            "id" : "CheckBoxGroup2",
+	            "list" : "收集策略点,升级建筑,生产军备",
+	            "select" : "0@2",
+	            "size" : "16",
+	            "type" : "CheckBoxGroup",
+	            "orientation" : "horizontal",
+	            "color" : "0,0,225"
+            },
+            {
+               "id" : "CheckBoxGroup1",
+               "list" : "钻石,苹果,包子",
+               "select" : "1@2",
+               "size" : "12",
+               "type" : "CheckBoxGroup",
+               "orientation" : "horizontal",
+               "color" : "0,0,225"
+            },
+            {
+               "align" : "left",
+               "color" : "0,0,0",
+               "size" : "12",
+               "text" : "选择出击队伍",
+               "bg" : "255,255,255",
+               "type" : "Label"
+            },
+            {
+               "id" : "ComboBox1",
+               "list" : "队伍1,队伍2,队伍3",
+               "select" : "0",
+               "size" : "12",
+               "type" : "ComboBox"
+            }
+         ]
+      }
+   ]
+}
