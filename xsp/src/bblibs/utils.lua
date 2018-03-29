@@ -27,28 +27,19 @@ function tap(x, y)
   touchUp(index, x, y)
   mSleep(50)
 end
-
+function distance(x1,y1,x2,y2)
+	return math.sqrt((x2-x1)^2+(y2-y2)^2)
+end
 -- 模拟滑动操作，从点(x1, y1)划到到(x2, y2)
 function swip(x1,y1,x2,y2)
-    local step, x, y, index = 20, x1 , y1, math.random(1,5)
+    local stepX,stepY, x, y,
+	index = (x2-x1)/5,(y2-y1)/5, x1 , y1, math.random(1,5)
     touchDown(index, x, y)
-
-    local function move(from, to) 
-      if from > to then
-        do 
-          return -1 * step 
-        end
-      else 
-        return step 
-      end 
-    end
-
-    while (math.abs(x-x2) >= step) or (math.abs(y-y2) >= step) do
-        if math.abs(x-x2) >= step then x = x + move(x1,x2) end
-        if math.abs(y-y2) >= step then y = y + move(y1,y2) end
-        touchMove(index, x, y)
-        mSleep(20)
-    end
+    for i=1,5 do
+		x=x+stepX
+		y=y+stepY
+		touchMove(index,x,y)
+	end
 
     touchMove(index, x2, y2)
     mSleep(30)

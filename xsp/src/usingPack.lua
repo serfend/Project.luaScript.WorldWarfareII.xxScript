@@ -1,4 +1,7 @@
 require "Init"
 require "Skill"
-require "Building"
+require "Building.Building"
+require "Building.City"
 require "Login"
+require "SettingUserInterface"
+require "Form"

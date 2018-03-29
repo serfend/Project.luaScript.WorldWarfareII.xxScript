@@ -4,14 +4,15 @@ function main()
 	require "SettingACheck"--加载全局设置
 	
 	init("0", _orientation)--初始化触摸操控脚本
-	require "SettingUI"
-	SettingUI:show()
+	
 	mainLoop()
 end
 skill=Skill:new{Interval=Skill["Interval"]}
 building = Building:new()
+MainForm=Form:new()
 function mainLoop()
 	while(true) do
+		MainForm:Exit()
 		Setting.Main.Runtime=Setting.Main.Runtime+1
 		if skill:NeedRefresh() then
 			if skill:Enter() then
@@ -20,14 +21,11 @@ function mainLoop()
 				skill:Exit()
 			end
 		end
-		showHUD(HUD.runing,
-			"生产中..." .. Setting.Main.Runtime,16,"0xffffffff","0x4c000000"
-			,0,1000,38,200,50)
-    
-		toast("主程序开始")
---		building:Enter()
+		
+		building:Enter()
+
 		toast("本轮结束," .. Setting.Main.Interval .. "秒后开始")
-		mSleep(Setting.Main.Interval)
+		mSleep(Setting.Main.Interval*1000)
 	end
 end
 -- lua异常捕捉

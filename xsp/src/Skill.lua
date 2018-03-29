@@ -22,6 +22,7 @@ function Skill:CheckNewSkillPoint()
 		"0|0|0xc00000",
 		95, 0, 0, 0)
 	if x > -1 then
+		ShowInfo.RunningInfo("获取技能点")
 		tap(x,y)
 		return true
 	else
@@ -30,7 +31,6 @@ function Skill:CheckNewSkillPoint()
 end
 lastAttainPoint=0
 function Skill:NeedRefresh()
-	
 	local nowTime=os.time()
 	local interval=nowTime-lastAttainPoint
 	local flag=false
@@ -41,6 +41,7 @@ function Skill:NeedRefresh()
 	return flag;
 end
 function Skill:Enter()
+	ShowInfo.RunningInfo("打开技能")
 	x,y=Skill:FindSkillPoint1()
 	
 	if x>-1 then
@@ -54,6 +55,7 @@ function Skill:Enter()
 	end
 end
 function Skill:Exit()
+	ShowInfo.RunningInfo("关闭技能")
 	if Skill.nowState==0 then
 		return true
 	end
@@ -86,40 +88,29 @@ function Skill:UseSkills(SkillIndexes)
 end
 function Skill:UseSkill(index)
 	local skillPos=skillList[index]
-	if skillPos=="" then 
-		sysLog("暂不支持技能"..index)
-		return false
-	else
-		sysLog("使用技能"..index)
-	end
-	
+
 	local x, y = findColor({904, 100, 1272, 650}, 
 	skillList[index],
 	90, 0, 0, 0)
 	if x > -1 then
 		if index<=4 then --资源策略
+			ShowInfo.RunningInfo("使用技能"..index)
 			
 		else
-			sysLog("不支持的策略")
+			ShowInfo.RunningInfo("不支持的策略"..index)
 		end
 	end
 end
 function Skill:RollToBegin()
+	ShowInfo.RunningInfo("初始化技能")
 	for i=0,5 do
-		touchDown(0,posX,endY)
-		for j=endY,beginY,50 do
-			touchMove(0,posX,j)
-		end
-		mSleep(50)
-		touchUp(0,posX,beginY)
+		self.LastSkillPage()
 	end
 	mSleep(500)
 end
+function Skill:LastSkillPage()
+	swip(posX,endY,posX,beginY)
+end
 function Skill:NextSkillPage()
-
-	touchDown(0,posX,beginY)
-	for i=beginY,endY,-50 do
-		touchMove(0,posX,i)
-	end
-	touchUp(0,1000,200)
+	swip(posX,beginY,posX, endY)
 end
