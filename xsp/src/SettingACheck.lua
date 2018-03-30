@@ -4,12 +4,12 @@ _fsw, _fsh = getScreenSize()
 _sw = _fsh - 1
 _sh = _fsw - 1
 
-_orientation = dialogRet("请选择您设备的放置方式：", "", "Home键在右", "Home键在左", 0)
+_orientation = 0--dialogRet("请选择您设备的放置方式：", "", "Home键在右", "Home键在左", 0)
 
 printFunction("Global Value:")
 printFunction("_orientation:".._orientation, "_fsw:".._fsw, "_fsh:".._fsh, "_sw:".._sw, "_sh:".._sh)
 
-local supportSize = (_fsw == 720 and _fsh == 1280) --检测是否支持该分辨率
+local supportSize = (_fsw == 1080 and _fsh == 1920) --检测是否支持该分辨率
 if not supportSize then
   choiceIfRun = dialogRet("不支持当前分辨率".."宽:".._fsw..",高:".._fsh, "停止运行", "强制运行", "", 0)
   if choiceIfRun == 0 then
@@ -20,8 +20,7 @@ if not supportSize then
     setScreenScale(1080,1920,0)
   end
 end
-printFunction("脚本启动完成")
-
+toast(_fsw .. "*" .. _fsh .. ":" .. getScreenDPI() )
 --local checkAssistant = appIsRunning("com.xxAssistant");--检测叉叉助手是否在运行
 --if checkAssistant == 0 then
 --  choice = dialogRet("请打开叉叉助手","取消","确定","",0);

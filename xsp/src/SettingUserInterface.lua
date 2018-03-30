@@ -1,59 +1,78 @@
-function show()
-	local ui = require "G_ui"
+UI = {
+	nowState=0,
+}--初始化
+function UI:new (o)
+    o = o or {}
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
+
+function UI:show(citylist,skillSetting)
+	local ui = require "bblibs.G_ui"
 
 	ui:new(_fsh,_fsw)
 
-local p = ui:newPage("通用设置")
-  p:newLine()
-  p:addLebel(2,1,"功能选项:") 
-  p:addComboBox(2.5,1,"总功能","0","做全部任务","只抢红包")
-  
-  p:newLine()
-  local b = p:newBox(10,0.5)
-  b:addCheckBoxGroup(8,7,"通用","0@1@2@3","自动抢红包","保持前台","领取奖励") --,"多账号登录"
-  p:newLine()
-  p:addLebel(2,1,"抢红包设置:") 
-  p:addComboBox(2.5,1,"抢红包","0","省电模式","一般模式","极速模式")
+	local p = ui:newPage("通用")
+	p:newLine()
+	p:addLebel(1,0.6,"屏幕方向",20) 
+	p:addComboBox(3,1,"orientation","0","Home键在右","Home键在左")
+	p:newLine()
+	p:addLebel(1,1,"脚本间隔",20) 
+	p:addEdit(1.2,0.8,"Main.Interval","120","","number",16)
+	p:addLebel(1,1,"策略间隔",20) 
+	p:addEdit(1.2,0.8,"Skill.Interval","600","","number",16)
+	p:newLine()
+	p:addCheckBoxGroup(8,1,"UnitTaskRunEnable","0@1@2@3","自动处理活动页","完成分支任务","收集野地事件","处理邮件信息")
+	p:newLine()
+	p:addCheckBoxGroup(8,1,"UnitSkillRunEnable","0@1@2","策略点","策略使用") 
+	p:newLine()
+	p:addCheckBoxGroup(8,1,"使用策略","","军费","钢铁","橡胶","石油","人口")
+	p:newLine()
+	p:addLebel(1,1,"建设设置",20) 
+	p:newLine()
 
-local p = ui:newPage("单人任务")
-local creat_renwu_ui = function(text,n)
-  p:addCheckBoxGroup_single(2.5,1,text,"0",text)
-  --p:newLine()
-  p:addLebel(0.8,1,"顺序:")
-  p:addComboBox(1.1,1,text.."顺序",tostring(n),"1","2","3","4","5","6","7","8","9","10")
-end
+	p:addCheckBoxGroup(8,1,"UnitCityRunEnable","0@1@2","城市建设","野地建设","军备生产")
+	p:newLine()
+	p:addCheckBoxGroup(8,1,"UnitAffairRunEnable","","打野","15叛","鹰")
+	p:newLine()
+	p:addCheckBoxGroup(8,1,"UnitWarRunEnable","","攻城","防御","增援军团","增援盟友")
+	p:newLine()
+	p:addLebel(1,1,"外交设置",20) 
+	p:addCheckBoxGroup(8,1,"UnitPolicyRunEnable","0@1@2","同意所有同盟","同意所有中立") 
 
-  p:newLine()
-  p:addLebel(2,1,"单人设置:") 
-  local b = p:newBox(10,0.5)
-  b:addCheckBoxGroup(8,7,"单人设置","0@1@2@3","自动退队")
-  p:newLine()
-  p:addLebel(2,1,"主线选项:") 
-  p:newLine()
-  creat_renwu_ui("主线任务",0) p:addLebel(0.3,1,"") creat_renwu_ui("菊爆大队",1)
-  p:newLine()
-  p:addLebel(2,1,"日常选项:") 
-  p:newLine()
-  creat_renwu_ui("职业任务",2) p:addLebel(0.3,1,"") creat_renwu_ui("特殊职业",3)
-  p:newLine()
-  creat_renwu_ui("考古任务",4) p:addLebel(0.3,1,"") creat_renwu_ui("挖宝",5)
-  p:newLine()
-  creat_renwu_ui("公会任务",6) p:addLebel(0.3,1,"") creat_renwu_ui("冰封王座",7)
-  p:newLine()
-  creat_renwu_ui("暗夜马戏团",8)
-  p:addLebel(0.3,1,"")
-  p:addLebel(2.3,1,"探索战斗次数:") p:addComboBox(1.1,1,"探索战斗次数","2","1","2","3","4","5","10","15","20") p:addLebel(0.8,1,"次")
-p = ui:newPage("组队任务")
-  p:newLine()
-  p:addLebel(3,1,"日常副本选项:") 
-  p:newLine()
-  creat_renwu_ui("日常副本",9)
-  local b = p:newBox(10,0.5)
-  b:addCheckBoxGroup(8,7,"日常副本设置","0@1@2@3","自动组队","自动领双","踢离线")
-  p:newLine()
-  p:addLebel(2.5,1,"最少队伍人数:") p:addComboBox(1,1,"日常副本人数","2","3","4","5") p:addLebel(0.8,1,"人")
-
-local ret,result = ui:show()
-
-if ret == 0 then lua_exit() end
+	local p = ui:newPage("城市未开放")
+	
+	p:newLine()
+	p:addLebel(2,1,"单人设置:") 
+	local b = p:newBox(10,0.5)
+	b:addCheckBoxGroup(8,7,"单人设置","0@1@2@3","自动退队")
+	p:newLine()
+	p:addLebel(2,1,"主线选项:") 
+	p:newLine()
+	p:addLebel(2,1,"日常选项:") 
+	p:newLine()
+	
+	p = ui:newPage("城市未开放")
+	
+	start,result= ui:show()
+	printTable(result)
+	if start==0 then
+		lua_exit()
+		return false
+	end
+	if result["orientation"]=="Home键在右" then
+		_orientation=1
+	else
+		_orientation=2
+	end
+	init("0", _orientation)--初始化触摸操控脚本
+	Setting.Main.Interval=tonumber(result["Main.Interval"])
+	Setting.Skill.Interval=tonumber(result["Skill.Interval"])
+	
+	Setting.Task.EnableOtherTask=result["UnitTaskRunEnable"]["完成分支任务"]
+	Setting.Task.EnableCollectEvent=result["UnitTaskRunEnable"]["收集野地事件"]
+	Setting.Task.EnableMailMessageHandle=result["UnitTaskRunEnable"]["处理邮件信息"]
+	Setting.Task.EnableAutoHandleActivity=result["UnitTaskRunEnable"]["自动处理活动页"]
+	return start,result
 end
