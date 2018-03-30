@@ -9,18 +9,39 @@ function Form:new (o)
 end
 
 function Form:Exit()
-	x,y=findExit()
+	x,y=Form:findExit()
 	if x>-1 then 
-		ShowInfo.RunningInfo("返回主界面")
+		ShowInfo.RunningInfo("退出界面")
 		tap(x,y)
-		mSleep(200)
+		sleepWithCheckLoading(500)
 	else
 	
 	end
 end
-function findExit()
-	return findColor({1172, 0, 1279, 67}, 
-"0|0|0x8c2f2f,17|9|0x993333,29|20|0x993434,54|23|0x973636,77|31|0x993333,68|5|0x993333,50|16|0x905151,22|28|0x993333,7|28|0x993333,5|19|0x993333,71|16|0x993333",
+function Form:findExit()
+	return findColor({1764, 0, 1919, 77}, 
+"0|0|0x993333,62|-7|0x993333",
 95, 0, 0, 0)
 
+end
+
+function Form:CheckLoading(lastX,lastY)
+	lastX=lastX or -1
+	x, y = findColor({882, 438, 1037, 587}, 
+	"0|0|0xfde992,-7|5|0xfae890",
+	90, 0, 0, 0)
+	if x > -1 then
+		if lastX>-1 then
+			if x==lastX and y==lastY then
+				return  false
+			else
+				return true
+			end
+		else
+			mSleep(50)--两次判断防误判
+			return Form:CheckLoading(x,y)
+		end
+	else
+		return false
+	end
 end

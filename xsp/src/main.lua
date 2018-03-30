@@ -1,29 +1,29 @@
 require "usingPack"
-function main()
-	require "util"--加载工具
-	require "SettingACheck"--加载全局设置
-	
-	init("0", _orientation)--初始化触摸操控脚本
-	
-	mainLoop()
-end
+require "util"--加载工具
+require "SettingACheck"--加载全局设置
 skill=Skill:new{Interval=Skill["Interval"]}
 building = Building:new()
+gameTask=GameTask:new()
 MainForm=Form:new()
+function main()
+	UserSettingForm=UI:new()
+	start,userSetting=UserSettingForm.show()
+	skill:setUseSkill(userSetting)
+	if start==0 then 
+		return false;
+	end
+	mainLoop()
+end
+
 function mainLoop()
 	while(true) do
 		MainForm:Exit()
 		Setting.Main.Runtime=Setting.Main.Runtime+1
-		if skill:NeedRefresh() then
-			if skill:Enter() then
-				skill:CheckNewSkillPoint()
-				skill:UseSkills({1,2,3})
-				skill:Exit()
-			end
-		end
 		
-		building:Enter()
-
+		gameTask:Run()
+		skill:Run()
+		building:Run()
+		
 		toast("本轮结束," .. Setting.Main.Interval .. "秒后开始")
 		mSleep(Setting.Main.Interval*1000)
 	end
@@ -34,10 +34,8 @@ function error(msg)
   printFunction(errorMsg)    
 end
 
---退出时隐藏HUD
 function beforeUserExit()
-  hideHUD(HUD.runing)
-  hideHUD(HUD.resource)
+
 end
 main()
 --xpcall(main, error)

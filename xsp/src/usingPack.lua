@@ -1,7 +1,7 @@
 require "Init"
+require "GameTask"
 require "Skill"
 require "Building.Building"
 require "Building.City"
-require "Login"
 require "SettingUserInterface"
 require "Form"
