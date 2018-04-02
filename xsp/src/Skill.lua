@@ -28,16 +28,21 @@ function Skill:Run()
 	if self:NeedRefresh() then
 		if self:Enter() then
 			if self.UserEnableAutoCollect then 
-				self:CheckNewSkillPoint()			
-				self:Exit()
+				local attainStatus,SkillPointX,SkillPointY=self:AttainNewSkillPoint()			
+				if attainStatus==1 then 
+					self:Exit()
+				end
 			else
 				ShowInfo.RunningInfo("技能点获取被禁用")
 			end
 			if self.UserEnableUseSkill then
 				self:UseSkills()
-				self:Exit()
 			else
 				ShowInfo.RunningInfo("技能使用被禁用")
+			end
+			if attainStatus==2 then
+				self:Enter()
+				tap(SkillPointX,SkillPointY)
 			end
 			self:Exit()
 		else
@@ -63,18 +68,38 @@ function Skill:CheckNewSkillPoint()
 		"0|0|0xc00000",
 		95, 0, 0, 0)
 	if x > -1 then
+		return true,x,y
+	else
+		return false
+	end
+end
+function Skill:AttainNewSkillPoint()
+		local haveNew,x,y=self:CheckNewSkillPoint()
+	if haveNew then
 		ShowInfo.RunningInfo("获取技能点")
 		tap(x,y)
-		return true
+		mSleep(200)
+		if self:CheckNewSkillPoint() then
+			ShowInfo.RunningInfo("技能点已满")
+			return 2,x,y
+		else
+			return 1
+		end
+		
 	else
 		ShowInfo.RunningInfo("暂无技能点可获取")
-		return false
+		return 0
 	end
 end
 lastAttainPoint=0
 function Skill:NeedRefresh()
+	if self.UserEnableAutoCollect ==false and  self.UserEnableUseSkill ==false then
+		ShowInfo.RunningInfo("策略被禁用")
+		return false
+	end
 	local nowTime=os.time()
 	local interval=nowTime-lastAttainPoint
+	sysLog(nowTime..","..interval..","..lastAttainPoint)
 	local flag=false
 	if interval>Setting.Skill.Interval then
 		flag=true
@@ -97,8 +122,10 @@ function Skill:CheckPointNotEnough(y)
 end
 function Skill:Enter()
 	ShowInfo.RunningInfo("打开技能")
-	
-	x,y=Skill:FindSkillPoint1()
+	if self:SkillPageIsOn() then 
+		return true
+	end
+	x,y=self:FindSkillPoint1()
 	
 	if x>-1 then
 		Skill.nowState=1
@@ -147,7 +174,6 @@ function Skill:UseSkills()
 	printTable(self.useSkills)
 	for i,skill in ipairs(self.useSkills) do
 		Skill:Enter()
-		Skill:RollToBegin()
 		Skill:UseSkill(skill)
 	end
 end
@@ -155,6 +181,7 @@ function Skill:UseSkill(index)
 	
 	local skillPos=skillList[index]
 	local findSkill=false
+	local beenTwiceAtButtom=false
 	while not findSkill
 	do
 		sleepWithCheckLoading(500)
@@ -183,8 +210,13 @@ function Skill:UseSkill(index)
 		else
 			self.NextSkillPage()
 			if Skill:AtButtomSkill() then 
-				ShowInfo.RunningInfo("未找到技能"..index)
-				return false
+				if beenTwiceAtButtom then
+					ShowInfo.RunningInfo("未找到技能"..index)
+					return false
+				else
+					beenTwiceAtButtom=true
+					Skill:RollToBegin()
+				end
 			end
 		end
 	end
@@ -204,6 +236,16 @@ function Skill:RollToBegin()
 	ShowInfo.RunningInfo("初始化技能")
 	while not Skill:AtTopSkill() do
 		Skill:LastSkillPage()
+	end
+end
+function Skill:SkillPageIsOn()
+	x, y = findColor({1413, 1013, 1600, 1060}, 
+	"0|0|0xcb9966,54|14|0x83725f,96|20|0xae8963,151|3|0xbe9265,110|3|0x9e8062",
+	95, 0, 0, 0)
+	if x > -1 then
+		return true
+	else
+		return false
 	end
 end
 function Skill:AtTopSkill()
