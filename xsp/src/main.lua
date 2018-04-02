@@ -14,7 +14,6 @@ function main()
 	end
 	mainLoop()
 end
-
 function mainLoop()
 	while(true) do
 		MainForm:Exit()
