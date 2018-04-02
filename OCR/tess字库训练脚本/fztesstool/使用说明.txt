@@ -1,0 +1,38 @@
+请自行安装tess环境
+目录请放在非中文目录下 比如说d盘根目录
+图片处理可以是用叉叉ide抓图二值化功能 自行调试偏色值
+qq截图保存为png文件   然后使用 jTessBoxEditor 的tool菜单转化城tif图片
+tif图片命名格式  为xxx.1.tif  xxx.2.tif 等等 放入work目录下
+运行start.bat
+先运行步骤1  生成box文件  然后 通过 jTessBoxEditor 修改box文件
+box文件修改结束后 运行步骤2 即可生成字库
+把字库改成自己想要的名字放入 脚本的res目录下
+初始化
+ocr, msg = createOCR({
+    type = "tesseract", -- 指定tesseract引擎
+    path = "res/", -- 字库路径在res
+    lang = "my" -- 使用自定义字库
+})
+if ocr ~= nil then
+    string.trim = function(s)
+        return s:match'^%s*(.*%S)' or ''
+    end
+    local code, text = 0, ""
+    code, text = ocr:getText({
+	psm  = 7,
+        rect = {604,240,641,267},
+        diff = {"0x553923-0x101010"},
+        --whitelist = "0123456789" -- 添加所有可能出现的字符作为白名单
+    })
+		--ocr:release()
+    sysLog("code = " .. tostring(code) .. ", text = " .. text:trim())
+		if code<0 then
+		  
+			return -1
+		else
+     return text:trim()
+		end
+	else
+			sysLog("createOCR failed: " .. tostring(msg))
+			return -1
+	end
