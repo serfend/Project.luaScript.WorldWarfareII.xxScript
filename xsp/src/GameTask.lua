@@ -68,6 +68,7 @@ function GameTask:AutoExitActivityForm()
 end
 function GameTask:CheckUserMailMessage()
 	if not Setting.Task.EnableMailMessageHandle then
+		ShowInfo.RunningInfo("跳过处理新邮件")
 		return false
 	end
 		x, y = findColor({10, 330, 149, 462}, 
@@ -75,6 +76,23 @@ function GameTask:CheckUserMailMessage()
 	95, 0, 0, 0)
 	if x > -1 then
 		ShowInfo.RunningInfo("处理新邮件")
+		tap(x,y)
+		sleepWithCheckLoading(500)
+			x, y = findColor({1481, 68, 1600, 976}, 
+		"0|0|0xe1ffff,9|6|0xd5ffff,14|6|0x7aaabf,29|-5|0xcbe3e9,20|-8|0xa7c3d2,6|-12|0xe5f2f5",
+		90, 0, 0, 0)
+		if x > -1 then
+			ShowInfo.RunningInfo("有附件,领取...")
+			tap(211,1033)--一键领取
+			sleepWithCheckLoading(500)
+			tap(955,962)--确定
+		else
+			tap(349,33)
+		end
+		sleepWithCheckLoading(500)
+		Form:Exit()
+	else
+		
 	end
 end
 function GameTask:CollectMapEvent()
