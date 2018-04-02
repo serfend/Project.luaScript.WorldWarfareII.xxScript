@@ -9,7 +9,7 @@
 8\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/Skill.lua
 9\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/usingPack.lua
 10\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/util.lua
-11\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/Building/CityBuilding.lua
+11\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/Application.lua
 12\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/bblibs/G_ui.lua
 13\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/bblibs/JSON.lua
 14\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/bblibs/md5.lua
@@ -28,8 +28,9 @@
 27\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/bblibs/socket/tp.lua
 28\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/bblibs/socket/url.lua
 29\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/Building/Building.lua
-size=30
+size=31
 30\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/Building/City.lua
+31\SOURCEFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/src/Building/CityBuilding.lua
 
 [UI]
 1\UIFILE=D:/aserfend/workSpace/lua/WorldWarfareII/xsp/ui/ui.json
