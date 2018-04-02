@@ -98,6 +98,7 @@ end
 function pos:isColorClick(s)
   local fl,abs = math.floor,math.abs
 	local c = self.color
+	
 	s = s or 90
   s = fl(0xff*(100-s)*0.01)
   local r,g,b = fl(c/0x10000),fl(c%0x10000/0x100),fl(c%0x100)
