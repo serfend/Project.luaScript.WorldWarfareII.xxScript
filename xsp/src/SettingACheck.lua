@@ -21,6 +21,9 @@ if not supportSize then
   end
 end
 toast(_fsw .. "*" .. _fsh .. ":" .. getScreenDPI() )
+if(getScreenDPI()~=480) then 
+	dialog("可能不支持的dpi:"..getScreenDPI().."，建议修改为480后再启动游戏")
+end
 --local checkAssistant = appIsRunning("com.xxAssistant");--检测叉叉助手是否在运行
 --if checkAssistant == 0 then
 --  choice = dialogRet("请打开叉叉助手","取消","确定","",0);
