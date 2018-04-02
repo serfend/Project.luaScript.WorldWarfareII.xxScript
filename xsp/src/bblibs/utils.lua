@@ -26,7 +26,42 @@ function sysLogLst(...)
   end
   sysLog(msg)
 end
-
+function getTableFirstValue(list)
+	local rootType = type(list)
+	if rootType == "table" then
+		for i,item in pairs(list) do
+			return getTableFirstValue(item)
+		end
+	else
+		return list
+	end
+end
+function exceptPosTableByNewtonDistance(list,dis)
+	local newList={}
+	
+	for i,item in ipairs(list) do
+		local canAdd=true
+		for j=i+1,#list do
+			local disX=math.abs(item.x-list[j].x)
+			local disY=math.abs(item.y-list[j].y)
+			if disX+disY<dis then
+				canAdd=false
+				break
+			end
+		end
+		if canAdd then 
+			table.insert (newList,item)
+		end
+	end
+	return newList
+end
+function split( str,reps )
+    local resultStrList = {}
+    string.gsub(str,'[^'..reps..']+',function ( w )
+        table.insert(resultStrList,w)
+    end)
+    return resultStrList
+end
 -- 模拟一次点击
 function tap(x, y,delay)
 	local x, y = x, y

@@ -4,7 +4,6 @@ CityBuilding = {
 	Name="",
 	Level=0,
 	Status="无",
-	Pos
 }--初始化
 
 function CityBuilding:new (o)
@@ -14,4 +13,6 @@ function CityBuilding:new (o)
     return o
 end
 
-function
+function CityBuilding:SynInfo()
+	
+end

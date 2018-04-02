@@ -1,4 +1,5 @@
 require "Building.Building"
+require "Building.CityBuilding"
 City = {
 	nowState=0,
 	ID="",
@@ -10,7 +11,9 @@ City = {
 	},
 	pos={
 		x=0,y=0
-	}
+	},
+	IsMainCity=0,--是否是主城
+	CityProperty="CityOther"
 }--初始化
 
 function City:new (o)
@@ -23,54 +26,288 @@ end
 function City:Init()
 	
 end
-BuildingInfoList={
-	城市="0|0|0xfefefe,0|12|0xe2e3e5,5|11|0xa7aaaf,6|-3|0xbdc0c3,16|-5|0xfdfdfe,18|8|0xc0c2c6,40|7|0xebeced,39|-7|0xc7c9cc,51|3|0xadb0b5,39|16|0x767a83",
-	兵工厂="0|0|0xf1f2f3,0|7|0xeaebec,13|11|0xc5c7ca,7|16|0xcbcdd0,-3|23|0xcacccf,15|22|0xcbcdd0,27|21|0xced0d3,37|18|0xf5f6f6,65|0|0xe0e1e3,56|23|0xe3e4e6",
-	陆军基地="0|0|0xced0d3,2|11|0xbbbdc1,13|12|0xc4c6ca,17|22|0xfafbfb,18|3|0xacafb4,35|6|0xe0e1e3,41|12|0xc6c8cb,40|22|0xb2b5b9,30|18|0xa9acb1",
-	空军基地="0|0|0xedeeef,32|-2|0xaaadb2,39|9|0xb4b6bb,18|9|0xa2a5ab,22|5|0x979aa1,25|2|0xa1a4aa,3|19|0xa9acb2,65|13|0xd6d8da,73|9|0xe0e1e3,80|10|0xf1f2f3,110|9|0xf5f6f6",
-	商业区="0|0|0xf1f1f2,1|23|0xaaadb2,5|18|0xdee0e1,5|12|0xadb0b5,24|13|0x9b9fa5,27|14|0xb7babe,37|18|0x787d85,54|25|0xe9eaeb,64|13|0xffffff,72|0|0x5f656e,70|7|0xb8bbbf",
-	炮塔="0|0|0xc3c6c9,7|4|0xfbfbfb,14|12|0xbec0c4,17|14|0xcacccf,22|18|0xb5b7bc,32|14|0xdddfe1,42|13|0xe0e1e3,49|-3|0xc3c5c9,38|-2|0xf6f6f7,47|0|0xd2d3d6,49|19|0xe7e8e9",
-	补给厂="0|0|0x565c66,-12|10|0x91959b,-1|18|0xcfd1d4,6|14|0xcfd1d4,26|9|0xdddee0,17|12|0xe9e9eb,33|25|0xebebed,46|25|0xfbfbfc,53|15|0xccced1,59|16|0xeaebec,76|24|0xd8dadc,83|4|0xc6c8cc",
-	铁矿="0|0|0xe8e9eb,-4|0|0xf2f2f3,-3|18|0xe1e2e4,-2|10|0xbfc2c5,-5|12|0xdbdddf,11|11|0xfefefe,13|2|0xd4d5d8,7|-1|0xb8bbbf,13|17|0xe2e3e5,33|10|0x8b8f96,26|7|0xe0e1e3,37|9|0xd5d6d9,44|-1|0xb8bbbf",
-	橡胶厂="0|0|0xf8f9f9,0|2|0xe2e3e5,0|6|0xfbfbfb,14|4|0xe3e4e6,15|15|0xb8bbbf,46|15|0xfcfdfd,36|6|0xd4d6d8,41|2|0xd8d9dc,62|6|0xebeced,70|-3|0xc6c8cc",
-	油井="0|0|0xe9eaeb,9|3|0xecedee,8|10|0xe2e3e5,1|12|0xfafafb,14|-5|0xe3e4e6,8|-7|0xecedee,25|4|0xdfe0e2,45|4|0xdfe0e2,40|-11|0xdddfe1,24|14|0xc1c3c7",
-	农场="0|0|0xb3b6bb,-3|4|0xe4e5e7,-13|15|0xdcdddf,-8|18|0xf5f5f6,2|16|0xf5f5f6,8|22|0xe5e6e8,38|26|0x82868e,30|23|0xebeced,31|12|0xc7c9cd,37|10|0xf7f7f8,32|4|0x8c9097",
-	村庄="0|0|0xb7b9be,-1|9|0xc7c9cc,15|2|0xf0f0f1,27|-6|0xdbdddf,39|2|0xfdfdfe,39|9|0xf1f2f3,25|13|0xf4f4f5,14|13|0xeeeeef,48|13|0xeaebec,47|-9|0xa2a5ab",
-	狙击塔="0|0|0xe6e7e9,-21|0|0xced0d2,-22|10|0xe1e2e4,-7|11|0xf9f9f9,22|6|0xe5e6e7,40|12|0xf6f6f7,-39|11|0xe5e6e7,-38|-2|0xeaeaec,-24|-12|0xccced1,41|-11|0x9fa3a8,39|1|0xa4a7ac",
-	资源区="0|0|0xdadbdd,5|3|0xb5b7bc,0|7|0xcfd1d4,8|20|0x9da1a6,8|15|0xc9cbce,-10|15|0xb7b9be,-9|5|0xbbbdc1,-9|0|0xc3c5c8,27|14|0xb6b9bd,39|13|0xc7c9cc,51|11|0xd1d3d6,64|11|0xf8f8f9,37|-2|0xd8d9db",
-	港口="",
-	军事区="0|0|0xf3f3f4,0|6|0xe8e9ea,0|16|0xfbfbfc,-6|16|0xdfe0e2,-29|9|0xeeeff0,-29|14|0xdcdddf,34|9|0xf8f8f9,20|2|0xd8d9dc,7|-2|0xb3b6bb,9|4|0xd8dadc",
-}
---城市有可能被改名,故特别处理,改用以图标查找
-城市Icon="0|0|0xd8c99f,16|8|0xdacfa2,28|14|0xc4e2e6,40|20|0x8dbbbe,42|31|0x212123,44|40|0x92aabb,47|50|0x5b687c,68|34|0x364c74,78|31|0x8e7557,89|20|0x39393d,74|10|0xcc875a,56|-2|0x585f5d"
-BuildingStatusList={
-	升级中="0|0|0xffffff,-7|-1|0xffffff,-34|-1|0xfdfdfd,-48|-1|0xfefefe,-65|-3|0xb9b9b9,-73|-5|0xffffff,-74|-15|0xc0c0c0,-78|9|0xcccccc,-48|0|0xffffff,-24|8|0xdbdbdb,6|-2|0xfcfcfc",
-	需要条件="0|0|0xfd0000,-34|-3|0xff0000,-45|6|0xff0000,-30|12|0xe50000,-38|11|0xfe0000,-47|7|0xce0000,-7|5|0xf60000,2|9|0xff0000,-7|14|0xe80000,6|17|0xeb0000",
-	可升级="0|0|0x39c900,5|7|0x288d00,-5|15|0x39c900,20|14|0x39c900,30|11|0x39c900,49|10|0x38c700,58|13|0x39c900,67|7|0x2b9800,-6|16|0x39c900,59|21|0x0c2c00",
-	资源不足="其他均搜索不到时为此",
-	废墟="0|0|0xda2828,-5|-1|0xf82e2e,21|5|0xe92b2b,21|15|0xeb2b2b,33|22|0xe22a2a,37|21|0xfc2f2f,32|8|0xe12a2a,42|2|0xc82525,36|-2|0xee2c2c,-8|18|0xfc2f2f",
-	安抚="0|0|0xffffff,-15|-5|0xfbfbfb,-27|-7|0xffffff,-40|1|0xffffff,-36|11|0xffffff,-13|13|0xffffff,-7|13|0xf7f7f7,8|14|0xfdfdfd,29|5|0xffffff,38|6|0xffffff",
-}
-function City:SelectBuilding(BuildingName)
-		x, y = findColor({548, 485, 1915, 537}, 
-		BuildingInfoList[BuildingName],
-		90, 0, 0, 0)
-	if x > -1 then
-		tap(x,y)
-		sleepWithCheckLoading(200)
+
+function City:Run()
+	sysLog(self.CityProperty.."Run()")
+	self:ShowAllBuildingQueue()
+	if Setting.Building[self.CityProperty.."Setting"].EnableAutoDevelop==false then
+		ShowInfo.RunningInfo("城市建设被禁用")
+		return false
+	end
+	self:RunBuilding("City")--城市
+	while true do
+		local nextX,nextY=City:FindNextAero()
+		ShowInfo.RunningInfo("寻找下个区域")
+		if nextX>0 then
+			tap(nextX,nextY)
+			if nextY>800 then
+				swip(20,800,20,600)
+				mSleep(200)
+			end
+			self:RunBuilding("Field")--野地
+		else
+			break
+		end
+	end
+	ShowInfo.RunningInfo("城市处理完成")
+end
+
+function City:FindNextAero()
+	x, y = findColor({442, 77, 531, 1074}, 
+	"0|0|0xa39380,-476|4|0x42332a,0|-71|0x8d6828,-479|-60|0x3e332a,-13|-45|0x8a6223,14|-7|0xa39380",
+	90, 0, 0, 0)
+		return x,y
+end
+function City:RunBuilding(id)
+	sleepWithCheckLoading(200)
+	if not City:CheckBuildingQueue(id) then return true end
+	ShowInfo.RunningInfo(id.."开始建筑")
+	for i=1,7 do
+		self:BuildBuildingInRank(i,id)
 	end
 end
-function City:GetBuildingInfo()--CanLevelUp,NowLevel
 
+function City:CheckBuildingQueue(id)
+	City:CheckImmediateBuilding()
+	if self:GetBuildingQueueFreeNum()<1 then
+		ShowInfo.RunningInfo(id.."无空闲队列")
+		sleepWithCheckLoading(800)
+		return false
+	end
+	return true
 end
 
-function City:RollToBegin()
+function City:ShowAllBuildingQueue()
+	for index=4,5 do
+		for i,building in ipairs(Setting.Building.City) do
+			if building[index]==true then
+				sysLog(building[1].."可建筑"..building[2])
+			else
+				sysLog(building[1].."禁止"..building[2])
+			end
+		end
+		for i,building in ipairs(Setting.Building.Field) do
+			if building[index]==true then
+				sysLog(building[1].."可建筑"..building[2])
+			else
+				sysLog(building[1].."禁止"..building[2])
+			end	
+		end
+		sysLog("------------")
+	end
+end
+function City:BuildBuildingInRank(rank,CityOrField)
+	sysLog("优先级建筑:"..rank.."状态"..self.IsMainCity)
+	for i,building in ipairs(Setting.Building[CityOrField]) do 
+		if math.abs(building[3-self.IsMainCity])==rank and building[5-self.IsMainCity]==true then
+			if building[1]~="none" then
+				local points=City:FindBuilding(building[1])
+				if #points>0 then
+					for i,buildingPos in ipairs(points) do
+						local buildingX=buildingPos.x
+						sysLog("x"..buildingX)
+						if buildingX>1650 then
+							swip(1650,647,1850,647)
+							mSleep(500)
+							buildingX=buildingX-200
+						end
+						tap(buildingX,650)
+						local tmpBuilding=CityBuilding:new()
+
+						tmpBuilding.Status=City:GetBuildingStatus(buildingX)
+						sysLog(tmpBuilding.Status)
+						if tmpBuilding.Status=="可升级" then
+							ShowInfo.RunningInfo("处理建筑"..rank..building[1])
+							if not City:UpLevel() then
+								City:Rebuild()
+							end
+						end
+					end
+				else
+					ShowInfo.RunningInfo("建筑"..building[1].."获取坐标失败")
+				end															
+			end
+
+		else
+			ShowInfo.RunningInfo("建筑"..building[1].."被禁用"..building[3-self.IsMainCity])
+		end
+	end
+end
+function City:UpLevel()
+		x, y = findColor({925, 848, 1839, 1009}, 
+	"0|0|0x35442c,55|-26|0x658953,82|14|0x5c764d,58|-1|0x85867d,-11|54|0x2e4423,0|38|0x757f68,32|-8|0xd1cfc8",
+	90, 0, 0, 0)--升级
+	if x > -1 then
+		tap(x,y)
+	else
+				x, y = findColor({925, 848, 1839, 1009}, 
+		"0|0|0x6b7475,-1|26|0x42565f,-3|49|0x4f585a,-27|42|0x8e9a9f,-26|69|0x5d6365,-60|54|0x4e5a5f,-54|34|0x667276",
+		95, 0, 0, 0)--重建
+		if x > -1 then
+			tap(x,y)
+		else
+			ShowInfo.RunningInfo("获取升级/建筑按钮失败")
+			return false
+		end
+	end
+	sysLog(x..","..y)
+	local tryTime=0
+	while not Form:Submit() do
+		mSleep(100)
+		tryTime=tryTime+1
+		if tryTime>10 then
+			ShowInfo.RunningInfo("提交建筑失败")
+			return false
+		end
+
+	end
+end
+function City:Rebuild()
+	x, y = findColor({925, 848, 1839, 1009}, 
+				"0|0|0x182411,22|27|0xb4b1a3,47|42|0x838279,62|53|0xd5d3cd,13|67|0x182212,0|32|0x26381d",
+				95, 0, 0, 0)
+		if x>-1 then
+			tap(x,y)
+			sleepWithCheckLoading(200)
+			tap(1260,680)
+			return true
+		else
+			ShowInfo.RunningInfo("获取重建按钮失败")
+		end
+end
+function City:GetBuildingStatus(buildingX)
+	for status,statuInfo in pairs(BuildingStatusList) do
+		x, y = findColor({buildingX-150, 542, buildingX+150, 636}, 
+			statuInfo,
+			90, 0, 0, 0)
+		if x>-1 then
+			return status
+		end
+	end
+	return "未知状态"
+end
+function City:GetBuildingQueueFreeNum()
+	point = findColors({1121, 196, 1710, 403}, 
+	{
+		{x=0,y=0,color=0x18d80e},
+		{x=14,y=1,color=0x18d80e},
+		{x=12,y=-14,color=0x18d80e},
+		{x=-4,y=-14,color=0x18d80e},
+		{x=4,y=-17,color=0x18d80e},
+		{x=4,y=9,color=0x18d80e},
+		{x=-3,y=12,color=0x18d80e},
+		{x=13,y=12,color=0x18d80e},
+		{x=-11,y=14,color=0x365d20}
+	},
+	95, 0, 0, 0)
+	
+	return #point 
+end
+function City:FindBuilding(BuildingName,findNextPage)
+	findNextPage=findNextPage or true
+	ShowInfo.RunningInfo("寻找建筑"..BuildingName)
+	local beenFindingForOnce=false
+	local firstTimeSearch=false
+	while true do
+		local atButtom=false
+		atButtom= self:CheckOnButtom()
+
+		if not firstTimeSearch then
+			mSleep(1000)
+		end
+		firstTimeSearch=false
+		points = findColors({549,484,1917,773}, 
+		BuildingInfoList[BuildingName] ,
+		90, 0, 0, 0)
+		sysLog(BuildingName.."找到"..#points.."个点")
+		if #points > 0 then
+			points= exceptPosTableByNewtonDistance(points,50)
+			sysLog(BuildingName.."处理后剩余"..#points.."个点")
+			return points
+		else
+			if atButtom==true then
+				if beenFindingForOnce==true or (not findNextPage) then
+					return {}
+				else
+					beenFindingForOnce=true
+					City:RollToBegin()
+				end
+			else
+				self:NextPage()
+			end
+			
+		end
+	end
+end
+function City:CheckImmediateBuilding()
+	local flag=false
+	x, y = findColor({1325, 279, 1882, 400}, 
+	"0|0|0xfafafa,-3|6|0xfbfbfb,2|14|0xf1f0ef,14|14|0xf1f0ef,17|6|0xfbfbfb,18|24|0xf5f4f3,30|25|0xf4f3f3,34|9|0xf9f8f8,45|2|0xfbfbfb,50|17|0xfbfbfa",
+	95, 0, 0, 0)
+	if x > -1 then
+		tap(x,y+70)
+		ShowInfo.RunningInfo("立即完成免费建筑")
+		sleepWithCheckLoading(200)
+		tap(961,800)
+		sleepWithCheckLoading(1200)
+		flag=true
+		flag=flag or self:CheckImmediateBuilding()
+	end
+	return flag
+end
+function City:GetAeraAllValidBuilding()
+	local All
+	local tmpBuilding=City:GetPageValidBuilding()
+	if #tmpBuilding==0 then
+		return false
+	else
+	
+	end
+end
+function City:GetPageValidBuilding()
+	
+end
+function City:GetBuildingInfo()--CanLevelUp,NowLevel
 	
 end
 
+function City:RollToBegin()
+	--ShowInfo.RunningInfo("回到顶部")
+	local times=0
+	while not City:CheckOnTop() do
+		City:LastPage()
+		times=times+1
+		if times>5 then
+			return
+		end
+	end
+	mSleep(2000)
+end
+function City:NextPage()
+	swip(1700,650,570,650,10)
+end
+function City:LastPage()
+	swip(570,650,1700,650,10)
+end
 function City:CheckOnTop()
-
+	x, y = findColor({548, 485, 637, 535}, 
+	"0|0|0x373e4a,0|13|0x373e4a,0|24|0x373e4a",
+	90, 0, 0, 0)
+	if x > -1 then
+		return false
+	else
+		--ShowInfo.RunningInfo("到达顶部")
+		return true
+	end
 end
 function City:CheckOnButtom()
-
+	x, y = findColor({1860, 489, 1919, 542}, 
+	"0|0|0x373e4a,0|13|0x373e4a,0|24|0x373e4a",
+	90, 0, 0, 0)
+	if x > -1 then
+		return false
+	else
+		--ShowInfo.RunningInfo("到达底部")
+		return true
+	end
 end
