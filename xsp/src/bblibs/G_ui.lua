@@ -359,7 +359,7 @@ function ui:addImage(index_w,index_h,adress,align,pos)
 		["type"] = "Image",
 		["src"]= adress,
 		["width"]	= width,
-    rect = rect
+		rect = rect
 	}
 	table.insert(self.views,arr)
 end
