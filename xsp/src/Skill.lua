@@ -182,8 +182,10 @@ function Skill:UseSkill(index)
 	local skillPos=skillList[index]
 	local findSkill=false
 	local beenTwiceAtButtom=false
-	while not findSkill
+	local findTime=0
+	while not findSkill and findTime<10
 	do
+		findTime=findTime+1
 		sleepWithCheckLoading(500)
 		ShowInfo.RunningInfo("使用技能"..index)
 		local x, y = findColor({posX, endY, 1920, beginY}, 

@@ -37,7 +37,8 @@ Setting={
 		Interval=600,
 	},
 	Task={
-		EnableOtherTask=false,
+		EnableAutoCompleteTask=false,
+		EnableAutoProcessTask=false,
 		EnableCollectEvent=false,
 		EnableMailMessageHandle=false,
 		EnableAutoHandleActivity=false,

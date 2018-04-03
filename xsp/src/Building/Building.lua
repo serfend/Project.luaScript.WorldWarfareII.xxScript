@@ -69,6 +69,13 @@ function Building:GetPageCityPos()
 	point = findColors({69, 73, 129, 982}, 
 	"0|0|0x92b380,8|4|0x4b6d3b,2|13|0x7c906b,14|33|0x577f43,-23|15|0x4d703c,-6|9|0x678559",
 	90, 0, 0, 0)
+	pointDeactive=findColors({69, 73, 129, 982}, 
+	"0|0|0x839966,1|33|0x839966,35|36|0x829866,35|8|0x839966,24|17|0xaca79a,11|14|0xc0b9ac,17|30|0x8d877b,29|34|0xa9a195",
+	90, 0, 0, 0)
+	--合并points ING
+	for i,item in ipairs(pointDeactive) do
+		table.insert(point,item)
+	end
 	ShowInfo.RunningInfo("获取到"..#point.."个城市")
 	local noNextPage=Building:AtBottom()
 	if #point ~= 0 then

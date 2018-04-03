@@ -63,7 +63,9 @@ function City:RunBuilding(id)
 	if not City:CheckBuildingQueue(id) then return true end
 	ShowInfo.RunningInfo(id.."开始建筑")
 	for i=1,7 do
-		self:BuildBuildingInRank(i,id)
+		if self:BuildBuildingInRank(i,id)==false then
+			return true
+		end
 	end
 end
 
@@ -122,31 +124,35 @@ function City:BuildBuildingInRank(rank,CityOrField)
 								City:Rebuild()
 							end
 						end
+						if not City:CheckBuildingQueue(CityOrField) then
+							return false
+						end
 					end
 				else
 					ShowInfo.RunningInfo("建筑"..building[1].."获取坐标失败")
 				end															
 			end
-
 		else
 			ShowInfo.RunningInfo("建筑"..building[1].."被禁用"..building[3-self.IsMainCity])
 		end
 	end
+	return true
 end
 function City:UpLevel()
-		x, y = findColor({925, 848, 1839, 1009}, 
+		x, y = findColor({771, 823, 1839, 1038}, 
 	"0|0|0x35442c,55|-26|0x658953,82|14|0x5c764d,58|-1|0x85867d,-11|54|0x2e4423,0|38|0x757f68,32|-8|0xd1cfc8",
-	90, 0, 0, 0)--升级
+	93, 0, 0, 0)--升级
 	if x > -1 then
 		tap(x,y)
 	else
-				x, y = findColor({925, 848, 1839, 1009}, 
-		"0|0|0x6b7475,-1|26|0x42565f,-3|49|0x4f585a,-27|42|0x8e9a9f,-26|69|0x5d6365,-60|54|0x4e5a5f,-54|34|0x667276",
-		95, 0, 0, 0)--重建
+		ShowInfo.RunningInfo("获取升级按钮失败")
+				x, y = findColor({771, 823, 1764, 1038}, 
+		"0|0|0x667276,-11|16|0xb4b4ae,5|24|0x747674,68|53|0x515759,83|41|0x3e6276,81|34|0xc9cdcb,66|22|0x8da7b6,60|-4|0xd9dad9,54|-21|0xcccac5,52|-32|0x20323c,78|-28|0xd4dbde,66|-18|0xdddedd,59|-2|0xc7cbcc,54|16|0xbdb9ac,48|15|0x436476",
+		95, 0, 0, 0)
 		if x > -1 then
 			tap(x,y)
 		else
-			ShowInfo.RunningInfo("获取升级/建筑按钮失败")
+			ShowInfo.RunningInfo("获取建造按钮失败")
 			return false
 		end
 	end
@@ -204,6 +210,7 @@ function City:GetBuildingQueueFreeNum()
 	return #point 
 end
 function City:FindBuilding(BuildingName,findNextPage)
+	City:CheckImmediateBuilding()
 	findNextPage=findNextPage or true
 	ShowInfo.RunningInfo("寻找建筑"..BuildingName)
 	local beenFindingForOnce=false

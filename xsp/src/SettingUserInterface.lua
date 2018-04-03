@@ -36,11 +36,12 @@ function UI:show(citylist,skillSetting)
 	
 	Setting.Main.Interval=tonumber(result["Main.Interval"])
 	Setting.Skill.Interval=tonumber(result["Skill.Interval"])
-	
-	Setting.Task.EnableOtherTask=result["UnitTaskRunEnable"]["完成分支任务"]
+	Setting.Building.Interval=tonumber(result["Building.Interval"])
+	Setting.Task.EnableAutoCompleteTask=result["UnitTaskRunEnable"]["自动结束任务"]
+	Setting.Task.EnableAutoProcessTask=result["UnitTaskRunEnable"]["自动完成主线任务"]
 	Setting.Task.EnableCollectEvent=result["UnitTaskRunEnable"]["收集野地事件"]
 	Setting.Task.EnableMailMessageHandle=result["UnitTaskRunEnable"]["处理邮件信息"]
-	Setting.Task.EnableAutoHandleActivity=result["UnitTaskRunEnable"]["自动处理活动页"]
+	Setting.Task.EnableAutoHandleActivity=result["UnitTaskRunEnable"]["处理活动页"]
 	UI:GetSetting(result,"CityMain")
 	UI:GetSetting(result,"CityOther")
 	return start,result
@@ -133,7 +134,11 @@ function UI:BuildGeneralPage(ui)
 	p:addLebel(1,1,"策略间隔",20) 
 	p:addEdit(1.2,0.8,"Skill.Interval","600","","number",16)
 	p:newLine()
-	p:addCheckBoxGroup(8,2,"UnitTaskRunEnable","0@1@2@3","自动处理活动页","完成分支任务","收集野地事件","处理邮件信息")
+	p:addLebel(1,1,"建筑间隔",20) 
+	p:addEdit(1.2,0.8,"Building.Interval","600","","number",16)
+	p:newLine()
+	
+	p:addCheckBoxGroup(8,2,"UnitTaskRunEnable","0@1@2@3@4","处理活动页","自动结束任务","自动完成主线任务","收集野地事件","处理邮件信息")
 	p:newLine()
 	p:addCheckBoxGroup(8,1,"UnitSkillRunEnable","0@1@2","策略点","策略使用") 
 	p:newLine()
@@ -157,9 +162,9 @@ function UI:BuildAboutPage(ui)
 	p = ui:newPage("关于")
 	p:addLebel(10,1,"当前版本:"..Application.version.."\n更新日期:"..Application.updateDate,20)
 	p:newLine()	
-	p:addLebel(10,0.5,"欢迎使用本脚本,目前尚处于开发阶段",20) 
+	p:addLebel(10,0.5,"用户屏幕:".._fsh.."*".._fsw..":".._userDpi,20,nil,(_fitScreen==true and "100,200,100" or "255,100,100")) 
 	p:newLine()
-	p:addLebel(10,0.5,"交流群:"..Application.groupQQ..",进群备注游戏id",20,nil,"255,0,0") 
+	p:addLebel(10,0.5,"欢迎使用本脚本,目前尚处于开发阶段,交流群:"..Application.groupQQ..",进群备注游戏id",20,nil,"255,0,0") 
 	p:newLine()
 	p:addLebel(10,15,"更新信息:\n"..table.concat(Application.UpdateInfo,"\n"),20,nil,"100,150,100") 
 	p:newLine()	

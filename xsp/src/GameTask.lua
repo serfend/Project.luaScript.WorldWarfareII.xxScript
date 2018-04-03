@@ -1,6 +1,7 @@
 
 GameTask = {
 	nowState=0,
+	MainThreadTaskRefresh=true,
 }--初始化
 
 function GameTask:new (o)
@@ -9,17 +10,87 @@ function GameTask:new (o)
     self.__index = self
     return o
 end
+function GameTask:MainTaskProcess()
+	local lastX,lastY=-1,-1
+	for i=1,10 do
+		local nowX,nowY=GameTask:GetNowTipPos()
+		if nowY>lastY and nowY>-1 then
+			lastX=nowX
+			lastY=nowY
+		end
+		mSleep(50)
+	end
+	Setting.ShowInfo.RunningInfo(lastX..","..lastY)
+	if lastX>-1 then
+		tap(lastX,lastY)
+		self:MainTaskProcess()
+	else
+		Form:Submit()
+		sleepWithCheckLoading(200)
+		if not GameTask:BuidlingIsOnProcess() then
+			if not Form:BuildAtMap() then
+				if not Form:Submit() then
+					if not Form:Build() then
+						ShowInfo.RunningInfo("自动处理失败")
+						return false
+					end
+				end
+			end
+		else
+			ShowInfo.RunningInfo("任务已提交")
+		end
+		self.MainThreadTaskRefresh=false
+		return true
+	end
+end
+function GameTask:BuidlingIsOnProcess()
+	x, y = findColor({533, 925, 1374, 1070}, 
+	"0|0|0x301c15,11|11|0xc8c5be,28|23|0xa39c95,42|39|0xcbc8bf,54|47|0xd6d3d2,70|60|0xada99b,82|68|0x392b26,93|81|0x75493b,94|3|0x8e5747,71|24|0x8d5746,61|32|0x3b251d,49|39|0xcbc8bf,38|47|0x442a21,22|57|0x79483b,3|73|0x939085",
+	90, 0, 0, 0)
+	if x > -1 then
+		return true
+	else
+		return false
+	end
+end
+function GameTask:MainTask()
+	if self.MainThreadTaskRefresh==false then 
+		ShowInfo.RunningInfo("上一任务正在完成中")
+		return false
+	end
+	tap(415,275)
+	local success=self:MainTaskProcess()
+	Form:Exit()
+	return success
+end
+function GameTask:GetNowTipPos()
+x,y = findColor({0, 0, 1920, 1080}, 
+	"0|0|0x679077,12|-19|0xcbeded,30|-34|0xc2ebeb,47|-47|0xafe4e4,37|-62|0xd8f2f2,71|-27|0xe3f6f6,89|-42|0xeff9f9,51|-85|0xffffff",
+	95, 0, 0, 0)
+	return x,y
+end
 function GameTask:Run()
 	GameTask:AutoExitActivityForm()
 	local times=0
-	while self.Find()==true do
+	while GameTask:Find()==true do
 		times=times+1
+		self.MainThreadTaskRefresh=true
 		ShowInfo.RunningInfo("完成主线任务"..times)
 	end
-	self.CheckOtherTask()
+	if Setting.Task.EnableAutoCompleteTask then
+		self:CheckTask("OtherTask")
+	end
 	Form:Exit()
-	GameTask:CollectMapEvent()
-	GameTask:CheckUserMailMessage()
+	self:CollectMapEvent()
+	self:CheckUserMailMessage()
+	
+	--最后开始以防干扰
+	if Setting.Task.EnableAutoProcessTask then
+		ShowInfo.RunningInfo("自动任务进程开始")
+		self:MainTask()
+	else
+		ShowInfo.RunningInfo("自动任务进程被禁用")
+	end
 end
 function GameTask:Find()
 	x, y = findColor({780, 665, 1147, 774}, 
@@ -34,25 +105,41 @@ function GameTask:Find()
 		return false
 	end
 end
-function GameTask:CheckOtherTask()
-	if not Setting.Task.EnableOtherTask then
-		return false
-	end
-	x, y = findColor({18, 217, 110, 325}, 
+local TaskType={
+	MainTask={228,382},
+	OtherTask={476,1074}
+}
+function GameTask:CheckTask(taskType)
+	x, y = findColor({18, 233, 110,316 }, 
 		"0|0|0xd00000,0|9|0xb60000",
 		95, 0, 0, 0)
 		if x > -1 then
 			tap(x,y)
 			sleepWithCheckLoading(500)
 			local times=0
-			while GameTask:FinishOtherTask() do
+			while GameTask:FinishTask(TaskType[taskType][1],TaskType[taskType][2]) do
 				times=times+1
-				ShowInfo.RunningInfo("完成分支任务"..times)
+				if taskType=="MainTask" then
+					self.MainThreadTaskRefresh=true
+				end
+				ShowInfo.RunningInfo("完成"..taskType.."任务"..times)
 			end
 			return true
 		else
 			return false
 		end
+end
+function GameTask:FinishTask(beginY,endY)
+	x, y = findColor({1313, beginY, 1647, endY}, 
+		"0|0|0xfddc61,15|23|0x3e2f07,123|24|0x352706,155|4|0xfecb1d",
+		95, 0, 0, 0)
+	if x > -1 then
+		tap(x,y)
+		sleepWithCheckLoading(200)
+		return true
+	else
+		return false
+	end
 end
 function GameTask:AutoExitActivityForm()
 	if not Setting.Task.EnableAutoHandleActivity then
@@ -110,21 +197,9 @@ function GameTask:CollectMapEvent()
 			times=times+1
 			ShowInfo.RunningInfo("收集到事件"..times)
 			sleepWithCheckLoading(500)
-			tap(x,y)
+			tap(800,1000)--关闭对话框
 		else
 			flag=false
 		end
-	end
-end
-function GameTask:FinishOtherTask()
-	x, y = findColor({1313, 476, 1647, 1074}, 
-		"0|0|0xfddc61,15|23|0x3e2f07,123|24|0x352706,155|4|0xfecb1d",
-		95, 0, 0, 0)
-	if x > -1 then
-		tap(x,y)
-		sleepWithCheckLoading(200)
-		return true
-	else
-		return false
 	end
 end

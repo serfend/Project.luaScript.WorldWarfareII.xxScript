@@ -38,7 +38,9 @@ function getTableFirstValue(list)
 end
 function exceptPosTableByNewtonDistance(list,dis)
 	local newList={}
-	
+	if list==nil then
+		return {}
+	end
 	for i,item in ipairs(list) do
 		local canAdd=true
 		for j=i+1,#list do
@@ -62,6 +64,17 @@ function split( str,reps )
     end)
     return resultStrList
 end
+function isColor(x,y,c,s)   --x,y为坐标值，c为颜色值，s为相似度，范围0~100。
+    local fl,abs = math.floor,math.abs
+    s = fl(0xff*(100-s)*0.01)
+    local r,g,b = fl(c/0x10000),fl(c%0x10000/0x100),fl(c%0x100)
+    local rr,gg,bb = getColorRGB(x,y)
+    if abs(r-rr)<s  and abs(g-gg)<s  and abs(b-bb)<s then
+        return true
+    end
+    return false
+end
+
 -- 模拟一次点击
 function tap(x, y,delay)
 	local x, y = x, y
