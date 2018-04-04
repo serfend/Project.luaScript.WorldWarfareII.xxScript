@@ -20,12 +20,12 @@ BuildingInfoList={
 }
 --城市有可能被改名,故特别处理,改用以图标查找
 BuildingStatusList={
-	升级中="0|0|0xffffff,-7|-1|0xffffff,-34|-1|0xfdfdfd,-48|-1|0xfefefe,-65|-3|0xb9b9b9,-73|-5|0xffffff,-74|-15|0xc0c0c0,-78|9|0xcccccc,-48|0|0xffffff,-24|8|0xdbdbdb,6|-2|0xfcfcfc",
+	升级中="0|0|0xffffff,0|-7|0xffffff,0|-15|0xffffff,0|-20|0xffffff,33|-19|0xffffff",
 	需要条件="0|0|0xfd0000,-34|-3|0xff0000,-45|6|0xff0000,-30|12|0xe50000,-38|11|0xfe0000,-47|7|0xce0000,-7|5|0xf60000,2|9|0xff0000,-7|14|0xe80000,6|17|0xeb0000",
 	可升级="0|0|0x39c900,0|3|0x38c500,0|5|0x37c200,0|8|0x37c200,0|10|0x37c200,-1|14|0x39c900,-1|17|0x39c900,-1|19|0x39c900,-1|22|0x39c900",
-	资源不足="其他均搜索不到时为此",
 	废墟="0|0|0xda2828,-5|-1|0xf82e2e,21|5|0xe92b2b,21|15|0xeb2b2b,33|22|0xe22a2a,37|21|0xfc2f2f,32|8|0xe12a2a,42|2|0xc82525,36|-2|0xee2c2c,-8|18|0xfc2f2f",
 	安抚="0|0|0xffffff,-15|-5|0xfbfbfb,-27|-7|0xffffff,-40|1|0xffffff,-36|11|0xffffff,-13|13|0xffffff,-7|13|0xf7f7f7,8|14|0xfdfdfd,29|5|0xffffff,38|6|0xffffff",
+	资源不足="",
 }
 
 Setting={
@@ -40,6 +40,7 @@ Setting={
 		EnableAutoCompleteTask=false,
 		EnableAutoProcessTask=false,
 		EnableCollectEvent=false,
+		EnableActiveCollectEvent=false,
 		EnableMailMessageHandle=false,
 		EnableAutoHandleActivity=false,
 	},

@@ -32,12 +32,13 @@ function Building:InitCityList()
 	Building:FoldCity()
 	ShowInfo.RunningInfo("获取城市列表")
 	Building:RollToBegin()	
-	Building:GetPageCityPos()
+	Building:GetPageCityPos()--目前只获取了第一页，以后可以根据id算出城市
+	
 end
 function Building:AnyExtractCity()
 		return  findColor({10, 70, 70, 1072}, 
 	"0|0|0x8f826b,21|19|0xf7e9cd,44|4|0xe8e5e3,42|10|0xd3cfc5,22|25|0xf7eacf,-1|8|0xf0d69e",
-	90, 0, 0, 0)
+	85, 0, 0, 0)
 end
 function Building:FoldCity()
 	ShowInfo.RunningInfo("折叠城市列表")
@@ -86,7 +87,7 @@ function Building:GetPageCityPos()
 			Building:AddCity(tmpCity)
 			mainCityX,mainCityY=Building:GetMainBuildingInCityList()
 			if mainCityY>0 then
-				--sysLog("主城y:"..mainCityY..",当前"..cityPos.y)
+				--ShowInfo.RunningInfo("主城y:"..mainCityY..",当前"..cityPos.y)
 				if cityPos.y>mainCityY and cityPos.y-mainCityY<100 then
 					--奇怪的主城判定方法2333
 					tmpCity.IsMainCity=1
@@ -97,13 +98,14 @@ function Building:GetPageCityPos()
 			tmpCity:Run()
 			Building:RollToBegin()
 			Building:FoldCity()
-			if noNextPage then 
-				return true
-			end
 		end
-		return true
+		if noNextPage then 
+			return true
+		else
+			return false
+		end
 	else
-		return false
+		return true
 	end
 	
 end
@@ -136,10 +138,10 @@ function Building:SelectMainCity()
 		if x>0 and x2 > 0 then
 			sleepWithCheckLoading(500)
 			tap(x2,y2)
-			sysLog("MainBuildingPos"..x2..","..y2)
+			ShowInfo.RunningInfo("MainBuildingPos"..x2..","..y2)
 			Building:WaitMainBuildingLoading()
 		else
-			sysLog("没有找到")
+			ShowInfo.RunningInfo("没有找到")
 		end
 end
 function Building:find()

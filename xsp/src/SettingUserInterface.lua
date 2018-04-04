@@ -40,6 +40,7 @@ function UI:show(citylist,skillSetting)
 	Setting.Task.EnableAutoCompleteTask=result["UnitTaskRunEnable"]["自动结束任务"]
 	Setting.Task.EnableAutoProcessTask=result["UnitTaskRunEnable"]["自动完成主线任务"]
 	Setting.Task.EnableCollectEvent=result["UnitTaskRunEnable"]["收集野地事件"]
+	Setting.Task.EnableActiveCollectEvent=result["UnitTaskRunEnable"]["主动收集野地事件"]
 	Setting.Task.EnableMailMessageHandle=result["UnitTaskRunEnable"]["处理邮件信息"]
 	Setting.Task.EnableAutoHandleActivity=result["UnitTaskRunEnable"]["处理活动页"]
 	UI:GetSetting(result,"CityMain")
@@ -130,15 +131,15 @@ function UI:BuildGeneralPage(ui)
 	p:addComboBox(3,1,"orientation","0","Home键在右","Home键在左")
 	p:newLine()
 	p:addLebel(1,1,"脚本间隔",20) 
-	p:addEdit(1.2,0.8,"Main.Interval","120","","number",16)
+	p:addComboBox(1.2,0.8,"Main.Interval","0","1","30","60","120","240","480","960","1920")
 	p:addLebel(1,1,"策略间隔",20) 
-	p:addEdit(1.2,0.8,"Skill.Interval","600","","number",16)
+	p:addComboBox(1.2,0.8,"Skill.Interval","0","1","30","60","120","240","600","1500","3600")
 	p:newLine()
 	p:addLebel(1,1,"建筑间隔",20) 
-	p:addEdit(1.2,0.8,"Building.Interval","600","","number",16)
+	p:addComboBox(1.2,0.8,"Building.Interval","0","1","30","60","120","240","600","1500","3600")
 	p:newLine()
 	
-	p:addCheckBoxGroup(8,2,"UnitTaskRunEnable","0@1@2@3@4","处理活动页","自动结束任务","自动完成主线任务","收集野地事件","处理邮件信息")
+	p:addCheckBoxGroup(8,2,"UnitTaskRunEnable","0@1@2@3@4@5@6","处理活动页","自动结束任务","自动完成主线任务","收集野地事件","主动收集野地事件","处理邮件信息")
 	p:newLine()
 	p:addCheckBoxGroup(8,1,"UnitSkillRunEnable","0@1@2","策略点","策略使用") 
 	p:newLine()

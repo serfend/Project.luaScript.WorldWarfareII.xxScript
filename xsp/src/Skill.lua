@@ -47,7 +47,7 @@ function Skill:Run()
 			self:Exit()
 		else
 			if self:Exit() then
-				sysLog("初始化技能失败!")
+				ShowInfo.RunningInfo("初始化技能失败!")
 			end
 			sleepWithCheckLoading(500)
 			return self:Run()
@@ -99,7 +99,7 @@ function Skill:NeedRefresh()
 	end
 	local nowTime=os.time()
 	local interval=nowTime-lastAttainPoint
-	sysLog(nowTime..","..interval..","..lastAttainPoint)
+	ShowInfo.RunningInfo(nowTime..","..interval..","..lastAttainPoint)
 	local flag=false
 	if interval>Setting.Skill.Interval then
 		flag=true
@@ -137,7 +137,7 @@ function Skill:Enter()
 			sleepWithCheckLoading(1500)
 			return self:Enter()
 		else
-			sysLog("未找到技能块")
+			ShowInfo.RunningInfo("未找到技能块")
 		end
 		return false
 	end

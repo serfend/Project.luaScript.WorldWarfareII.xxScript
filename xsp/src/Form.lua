@@ -45,7 +45,7 @@ function Form:GetAllBuildingPlaceValid()
 	"0|0|0x77ffff,13|5|0x78ffff",
 	95, 0, 0, 0)
 	point=exceptPosTableByNewtonDistance(point,50)
-	sysLog("共发现建造点"..#point.."个")
+	Setting.ShowInfo.RunningInfo("共发现建造点"..#point.."个")
 	return point
 end
 function Form:CheckBuildNewRequire()
@@ -70,8 +70,8 @@ function Form:findSubmit()
 end
 function Form:findExit()
 	return findColor({1764, 0, 1919, 77}, 
-"0|0|0x993333,62|-7|0x993333",
-95, 0, 0, 0)
+"0|0|0x993333,62|7|0x993333",
+90, 0, 0, 0)
 
 end
 

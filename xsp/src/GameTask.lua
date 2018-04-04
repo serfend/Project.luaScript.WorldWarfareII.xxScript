@@ -20,7 +20,7 @@ function GameTask:MainTaskProcess()
 		end
 		mSleep(50)
 	end
-	Setting.ShowInfo.RunningInfo(lastX..","..lastY)
+	ShowInfo.RunningInfo(lastX..","..lastY)
 	if lastX>-1 then
 		tap(lastX,lastY)
 		self:MainTaskProcess()
@@ -63,10 +63,31 @@ function GameTask:MainTask()
 	Form:Exit()
 	return success
 end
+local TipDirection=1
+local TipDirectionUsed=2
+TipDirectionData={
+	[1]="0|0|0x679077,12|-19|0xcbeded,30|-34|0xc2ebeb,47|-47|0xafe4e4,37|-62|0xd8f2f2,71|-27|0xe3f6f6,89|-42|0xeff9f9,51|-85|0xffffff",--左下
+	[2]="0|0|0xa9ccbf,5|-5|0x76ad97,22|7|0xacd0c4,15|15|0xacd8d1,42|30|0xd0efef,31|42|0xc1eaea",--左上
+	[3]="",--右下
+	[4]="",--右上
+}
 function GameTask:GetNowTipPos()
-x,y = findColor({0, 0, 1920, 1080}, 
-	"0|0|0x679077,12|-19|0xcbeded,30|-34|0xc2ebeb,47|-47|0xafe4e4,37|-62|0xd8f2f2,71|-27|0xe3f6f6,89|-42|0xeff9f9,51|-85|0xffffff",
-	95, 0, 0, 0)
+	local x,y=0,0
+	local tryTime=0
+	while tryTime<TipDirectionUsed do
+		sysLog("direction"..TipDirection)
+		x,y = findColor({0, 0, 1920, 1080}, 
+			TipDirectionData[TipDirection],
+			95, 0, 0, 0)
+		if x<0 then
+			tryTime=tryTime+1
+			TipDirection=math.mod(TipDirection,TipDirectionUsed)+1
+			
+		else
+			break
+		end
+	end
+
 	return x,y
 end
 function GameTask:Run()
@@ -198,6 +219,9 @@ function GameTask:CollectMapEvent()
 			ShowInfo.RunningInfo("收集到事件"..times)
 			sleepWithCheckLoading(500)
 			tap(800,1000)--关闭对话框
+			if times>5 then
+				break
+			end
 		else
 			flag=false
 		end
