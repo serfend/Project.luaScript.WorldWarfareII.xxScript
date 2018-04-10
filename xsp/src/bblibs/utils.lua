@@ -5,6 +5,20 @@
 function sysLogFmt(fmt, ...)
   sysLog(string.format(fmt, ...))
 end
+function restartApp(delay)
+	delay=delay or 30000
+	local lastApp=frontAppName()
+	closeApp(lastApp)
+	mSleep(2000)
+	
+	runApp(lastApp)
+	for i=delay,1,-5000 do
+		toast("重启中..."..i.."ms后重新启动")
+		mSleep(5000)
+	end
+	
+	
+end
 function sleepWithCheckLoading(interval)
 	local canGoOn=false
 	local times=0
@@ -13,6 +27,10 @@ function sleepWithCheckLoading(interval)
 		if Form:CheckLoading() then
 			times=times+1
 			ShowInfo.RunningInfo("出现卡顿"..times)
+			if times>10 then
+				toast("达到卡顿最大上限，重启游戏")
+				restartApp()
+			end
 		else
 			canGoOn=true
 		end
@@ -93,7 +111,7 @@ function distance(x1,y1,x2,y2)
 end
 -- 模拟滑动操作，从点(x1, y1)划到到(x2, y2)
 function swip(x1,y1,x2,y2,step)
-	step=step or 5
+	step=step or 10
 	index = math.random(1,5)
     touchDown(index, x1, y1)
     for i=1,step do

@@ -91,7 +91,7 @@ function Skill:AttainNewSkillPoint()
 		return 0
 	end
 end
-lastAttainPoint=0
+local lastAttainPoint=0
 function Skill:NeedRefresh()
 	if self.UserEnableAutoCollect ==false and  self.UserEnableUseSkill ==false then
 		ShowInfo.RunningInfo("策略被禁用")
@@ -99,7 +99,7 @@ function Skill:NeedRefresh()
 	end
 	local nowTime=os.time()
 	local interval=nowTime-lastAttainPoint
-	ShowInfo.RunningInfo(nowTime..","..interval..","..lastAttainPoint)
+	--ShowInfo.RunningInfo(nowTime..","..interval..","..lastAttainPoint)
 	local flag=false
 	if interval>Setting.Skill.Interval then
 		flag=true

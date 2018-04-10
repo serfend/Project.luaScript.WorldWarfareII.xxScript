@@ -15,11 +15,13 @@ function UI:show(citylist,skillSetting)
 	local p = ui:newPage("主城建设")
 	UI:BuildCityDevelopPriortyOption(p,"CityMain")
 	p = ui:newPage("分城建设")
-	p:addCheckBoxGroup_single(3,1,"CityOther.EnableTransportRescouseToMainCity","","运输资源到主城")
+	p:addCheckBoxGroup_single(5,1,"CityOther.EnableIntelligenceTransportRescource","","资源平仓（未开放）")
+	p:newLine()
 	UI:BuildCityDevelopPriortyOption(p,"CityOther")
 	--p = ui:newPage("军团城市(未开放)")
 	UI:BuildAboutPage(ui)
 	UI:BuildNoticeage(ui)
+
 	start,result= ui:show()
 	printTable(result)
 	if start==0 then
@@ -37,16 +39,22 @@ function UI:show(citylist,skillSetting)
 	Setting.Main.Interval=tonumber(result["Main.Interval"])
 	Setting.Skill.Interval=tonumber(result["Skill.Interval"])
 	Setting.Building.Interval=tonumber(result["Building.Interval"])
+	Setting.Task.CollectEvent.Interval=tonumber(result["Task.CollectEvent.Interval"])
 	Setting.Task.EnableAutoCompleteTask=result["UnitTaskRunEnable"]["自动结束任务"]
 	Setting.Task.EnableAutoProcessTask=result["UnitTaskRunEnable"]["自动完成主线任务"]
+	Setting.Task.EnableAutoProcessTaskDuplicate=result["UnitTaskRunEnable"]["防重复执行主线"]
 	Setting.Task.EnableCollectEvent=result["UnitTaskRunEnable"]["收集野地事件"]
 	Setting.Task.EnableActiveCollectEvent=result["UnitTaskRunEnable"]["主动收集野地事件"]
 	Setting.Task.EnableMailMessageHandle=result["UnitTaskRunEnable"]["处理邮件信息"]
 	Setting.Task.EnableAutoHandleActivity=result["UnitTaskRunEnable"]["处理活动页"]
+	
+	
 	UI:GetSetting(result,"CityMain")
 	UI:GetSetting(result,"CityOther")
+	UI:GetSetting(result,"TestModel")
 	return start,result
 end
+
 function UI:GetSetting(result,id)
 	local tmp={}
 	for k,v in pairs(result) do
@@ -69,7 +77,8 @@ function UI:GetSetting(result,id)
 				if isPrioritySetting==true then
 					Setting.Building[itemCity][BuildingIndex][id=="CityMain" and 2 or 3]=v
 				else
-					Setting.Building[itemCity][BuildingIndex][id=="CityMain" and 4 or 5]=v[itemTarget]
+					Setting.Building[itemCity][BuildingIndex][id=="CityMain" and 4 or 5]=(v[itemTarget] or false)
+					sysLog(id.."."..itemCity.."."..itemTarget.."="..tostring(Setting.Building[itemCity][BuildingIndex][id=="CityMain" and 4 or 5]))
 				end
 
 			else
@@ -83,13 +92,19 @@ function UI:GetSetting(result,id)
 end
 local nowLineOptNum=0
 function UI:BuildCityDevelopPriortyOption(p,TabId)
-	p:addCheckBoxGroup_single(2,1,TabId..".EnableAutoDevelop","","自动建设")
+	local CityIndex=(TabId=="CityMain" and 2 or 3)
+	p:addCheckBoxGroup_single(2,1,TabId..".EnableAutoDevelop","0","自动建设")
+	p:addCheckBoxGroup_single(2,1,TabId..".EnableAutoProductSupply","","生产补给")
+	p:addCheckBoxGroup_single(2,1,TabId..".EnableAutoRepair","","自动修理")
+	p:addCheckBoxGroup_single(2,1,TabId..".EnableAutoConcilite","","自动安抚")
+	p:newLine()
+	p:addCheckBoxGroup_single(8,1,TabId..".SkipWhenHigherPriorityBuilingIsLackOfRescource","0","当优先级更高的建筑缺少资源时暂停其他建筑升级")
 	p:newLine()
 	p:addLebel(1,0.6,"城市建设",20)
 	p:newLine()
 	nowLineOptNum=0
 	for buildIndex,buildingInfo in ipairs(Setting.Building.City) do
-		UI:AddCityBuildingList(p,TabId..".City",buildingInfo[1],buildingInfo[2])
+		UI:AddCityBuildingList(p,TabId..".City",buildingInfo[1],buildingInfo[CityIndex])
 	end
 
 	
@@ -98,7 +113,7 @@ function UI:BuildCityDevelopPriortyOption(p,TabId)
 	p:newLine()
 	nowLineOptNum=0
 	for buildIndex,buildingInfo in ipairs(Setting.Building.Field) do
-		UI:AddCityBuildingList(p,TabId..".Field",buildingInfo[1],buildingInfo[3])
+		UI:AddCityBuildingList(p,TabId..".Field",buildingInfo[1],buildingInfo[CityIndex])
 	end
 	
 	p:newLine()
@@ -123,7 +138,7 @@ function UI:AddCityBuildingList(p,TabId,Name,defaultSelect)
 	end
 	p:addCheckBoxGroup_single(1.8,1,TabId..".Develop.EnableBuild."..Name,buildEnable,Name)
 	p:addLebel(0.8,1,"优先")
-	p:addComboBox(1.1,1,TabId..".Develop.Priority."..Name,tostring(defaultSelect),"1","2","3","4","5","6","7")
+	p:addComboBox(1.1,1,TabId..".Develop.Priority."..Name,tostring(defaultSelect-1),"1","2","3","4","5","6","7")
 end
 function UI:BuildGeneralPage(ui)
 	local p = ui:newPage("通用")
@@ -131,15 +146,16 @@ function UI:BuildGeneralPage(ui)
 	p:addComboBox(3,1,"orientation","0","Home键在右","Home键在左")
 	p:newLine()
 	p:addLebel(1,1,"脚本间隔",20) 
-	p:addComboBox(1.2,0.8,"Main.Interval","0","1","30","60","120","240","480","960","1920")
+	p:addComboBox(1.2,1,"Main.Interval","0","1","30","60","120","240","480","960","1920")
 	p:addLebel(1,1,"策略间隔",20) 
-	p:addComboBox(1.2,0.8,"Skill.Interval","0","1","30","60","120","240","600","1500","3600")
+	p:addComboBox(1.2,1,"Skill.Interval","2","1","30","60","120","240","600","1500","3600")
 	p:newLine()
 	p:addLebel(1,1,"建筑间隔",20) 
-	p:addComboBox(1.2,0.8,"Building.Interval","0","1","30","60","120","240","600","1500","3600")
+	p:addComboBox(1.2,1,"Building.Interval","0","1","30","60","120","240","600","1500","3600")
+	p:addLebel(1.2,1,"野外事件间隔",16) 
+	p:addComboBox(1.2,1,"Task.CollectEvent.Interval","4","1","60","120","360","600","900","1200","1500","1800","2400","3000","3600")
 	p:newLine()
-	
-	p:addCheckBoxGroup(8,2,"UnitTaskRunEnable","0@1@2@3@4@5@6","处理活动页","自动结束任务","自动完成主线任务","收集野地事件","主动收集野地事件","处理邮件信息")
+	p:addCheckBoxGroup(8,4,"UnitTaskRunEnable","0@1@2@3@4@5@6@7","处理活动页","自动结束任务","自动完成主线任务","防重复执行主线","收集野地事件","主动收集野地事件","处理邮件信息")
 	p:newLine()
 	p:addCheckBoxGroup(8,1,"UnitSkillRunEnable","0@1@2","策略点","策略使用") 
 	p:newLine()
@@ -167,7 +183,25 @@ function UI:BuildAboutPage(ui)
 	p:newLine()
 	p:addLebel(10,0.5,"欢迎使用本脚本,目前尚处于开发阶段,交流群:"..Application.groupQQ..",进群备注游戏id",20,nil,"255,0,0") 
 	p:newLine()
-	p:addLebel(10,15,"更新信息:\n"..table.concat(Application.UpdateInfo,"\n"),20,nil,"100,150,100") 
+	p:addLebel(10,5,"更新信息:\n"..table.concat(Application.UpdateInfo,"\n"),20,nil,"100,150,100") 
+	p:newLine()	
+	for j=1,1 do
+	for i,item in ipairs(Application.ProcessInfo) do
+		if item[1]==1 then
+			p:addImage(0.3,0.3,(item[1]==1 and "Process.Completed.png"))
+		else if item[1]==0 then
+				p:addImage(0.3,0.3,(item[1]==0 and "Process.Processing.png"))
+			else if item[1]==-1 then
+					p:addImage(0.3,0.3,(item[1]==-1 and "Process.Closed.png"))
+				else
+					
+				end
+			end
+		end
+		p:addLebel(10,0.5,item[2],24,nil,"100,100,150") 
+		p:newLine()	
+	end
+	end
 	p:newLine()	
 	p:addLebel(10,0.5,"power by "..Application.author.." on xxScript.lua.[2.0.1.3]",10)
 	

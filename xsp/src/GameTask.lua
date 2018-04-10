@@ -12,13 +12,13 @@ function GameTask:new (o)
 end
 function GameTask:MainTaskProcess()
 	local lastX,lastY=-1,-1
-	for i=1,10 do
+	local beginTime=os.time()
+	while os.time()-beginTime<4 do
 		local nowX,nowY=GameTask:GetNowTipPos()
 		if nowY>lastY and nowY>-1 then
 			lastX=nowX
 			lastY=nowY
 		end
-		mSleep(50)
 	end
 	ShowInfo.RunningInfo(lastX..","..lastY)
 	if lastX>-1 then
@@ -63,22 +63,15 @@ function GameTask:MainTask()
 	Form:Exit()
 	return success
 end
-local TipDirection=1
-local TipDirectionUsed=2
-TipDirectionData={
-	[1]="0|0|0x679077,12|-19|0xcbeded,30|-34|0xc2ebeb,47|-47|0xafe4e4,37|-62|0xd8f2f2,71|-27|0xe3f6f6,89|-42|0xeff9f9,51|-85|0xffffff",--左下
-	[2]="0|0|0xa9ccbf,5|-5|0x76ad97,22|7|0xacd0c4,15|15|0xacd8d1,42|30|0xd0efef,31|42|0xc1eaea",--左上
-	[3]="",--右下
-	[4]="",--右上
-}
+
 function GameTask:GetNowTipPos()
 	local x,y=0,0
 	local tryTime=0
 	while tryTime<TipDirectionUsed do
-		sysLog("direction"..TipDirection)
+		--sysLog("direction"..TipDirection)
 		x,y = findColor({0, 0, 1920, 1080}, 
 			TipDirectionData[TipDirection],
-			95, 0, 0, 0)
+			95, 0, (TipDirection==1 and 1 or 0), 0)-- 为左下手指时从下向上扫描
 		if x<0 then
 			tryTime=tryTime+1
 			TipDirection=math.mod(TipDirection,TipDirectionUsed)+1
@@ -102,6 +95,7 @@ function GameTask:Run()
 		self:CheckTask("OtherTask")
 	end
 	Form:Exit()
+	
 	self:CollectMapEvent()
 	self:CheckUserMailMessage()
 	
@@ -152,7 +146,7 @@ function GameTask:CheckTask(taskType)
 end
 function GameTask:FinishTask(beginY,endY)
 	x, y = findColor({1313, beginY, 1647, endY}, 
-		"0|0|0xfddc61,15|23|0x3e2f07,123|24|0x352706,155|4|0xfecb1d",
+		"0|0|0xfbc01d,0|15|0xc08915,0|30|0xc18f0c,0|45|0xfed002",
 		95, 0, 0, 0)
 	if x > -1 then
 		tap(x,y)
@@ -187,7 +181,7 @@ function GameTask:CheckUserMailMessage()
 		tap(x,y)
 		sleepWithCheckLoading(500)
 			x, y = findColor({1481, 68, 1600, 976}, 
-		"0|0|0xe1ffff,9|6|0xd5ffff,14|6|0x7aaabf,29|-5|0xcbe3e9,20|-8|0xa7c3d2,6|-12|0xe5f2f5",
+		"0|0|0xeef2f5,0|9|0x93b3c6,0|18|0x20557c,0|27|0x295e84,0|36|0x304e65",
 		90, 0, 0, 0)
 		if x > -1 then
 			ShowInfo.RunningInfo("有附件,领取...")
@@ -203,14 +197,34 @@ function GameTask:CheckUserMailMessage()
 		
 	end
 end
-function GameTask:CollectMapEvent()
-	if not Setting.Task.EnableCollectEvent then
+local lastCollectEventTime=0
+local thisTimeNeedRefresh=true
+function GameTask:NeedRefresh()
+	if Setting.Task.EnableCollectEvent ==false then
+		--ShowInfo.RunningInfo("野外事件被禁用")
 		return false
 	end
+	local nowTime=os.time()
+	local interval=nowTime-lastCollectEventTime
+	--sysLog(nowTime..","..lastCollectEventTime)
+	if interval>Setting.Task.CollectEvent.Interval then
+		thisTimeNeedRefresh=true
+		lastCollectEventTime=nowTime
+	else
+		thisTimeNeedRefresh=false
+	end
+	sysLog("needR"..interval..","..tostring(thisTimeNeedRefresh))
+	return thisTimeNeedRefresh;
+end
+function GameTask:CheckNeedRefresh()
+	return thisTimeNeedRefresh
+end
+function GameTask:CollectMapEvent()
+	--sysLog("collect")
 	local flag=true
 	local times=0
 	while flag do
-			x, y = findColor({0, 2, 1919, 1079}, 
+			x, y = findColor({200, 100, 1700, 1000}, 
 		"0|0|0xf7f7f7,5|61|0xd4d7de,93|65|0xd2d5dc,90|0|0xf6f6f6",
 		95, 0, 0, 0)
 		if x > -1 then

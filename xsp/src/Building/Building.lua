@@ -4,7 +4,6 @@ resInfo={
 Building = {
 	nowState=0,
 	fund=resInfo,
-	cityList={}
 }--初始化
 
 function Building:new (o)
@@ -17,28 +16,19 @@ function Building:Run()
 	if Setting.Building.CityOtherSetting.EnableTransportRescouseToMainCity then
 		sysLog("2333")
 	end
-
+	gameTask:NeedRefresh()
 	if Setting.Building.CityMainSetting.EnableAutoDevelop==false and Setting.Building.CityOtherSetting.EnableAutoDevelop==false then
 		ShowInfo.RunningInfo("城市建设被禁用")
 		return false
 	end
 	self:Enter()
-	Building:InitCityList()
+	Building:BuildingBegin()
 	self:Exit()
 end
-function Building:InitCityList()
-	self.cityList={}
-	Building:EnterCityList()
-	Building:FoldCity()
-	ShowInfo.RunningInfo("获取城市列表")
-	Building:RollToBegin()	
-	Building:GetPageCityPos()--目前只获取了第一页，以后可以根据id算出城市
-	
-end
 function Building:AnyExtractCity()
-		return  findColor({10, 70, 70, 1072}, 
+		return  findColor({10, 70, 100, 1072}, 
 	"0|0|0x8f826b,21|19|0xf7e9cd,44|4|0xe8e5e3,42|10|0xd3cfc5,22|25|0xf7eacf,-1|8|0xf0d69e",
-	85, 0, 0, 0)
+	80, 0, 0, 0)
 end
 function Building:FoldCity()
 	ShowInfo.RunningInfo("折叠城市列表")
@@ -54,8 +44,8 @@ function Building:ExtractFoldCity(cityY)
 	x,y=Building:AnyExtractCity()
 	if x==-1 then
 		x,y=findColor({18,cityY-120,73,cityY+80},
-		"0|0|0xf1efe9,-8|0|0xf5f4ed,10|23|0xf6e8ca,19|23|0xcec4a4,0|45|0xe7cf9a,-8|45|0xe5cf9b"
-		,90,0,0,0)
+		"0|0|0xf1efe9,-8|0|0xf5f4ed,10|23|0xf6e8ca,19|23|0xcec4a4"
+		,80,0,0,0)
 		if x>-1 then
 			tap(x,y)
 			sleepWithCheckLoading(200)
@@ -66,64 +56,47 @@ function Building:ExtractFoldCity(cityY)
 		ShowInfo.RunningInfo("无需展开城市")
 	end
 end
-function Building:GetPageCityPos()
-	point = findColors({69, 73, 129, 982}, 
-	"0|0|0x92b380,8|4|0x4b6d3b,2|13|0x7c906b,14|33|0x577f43,-23|15|0x4d703c,-6|9|0x678559",
-	90, 0, 0, 0)
-	pointDeactive=findColors({69, 73, 129, 982}, 
-	"0|0|0x839966,1|33|0x839966,35|36|0x829866,35|8|0x839966,24|17|0xaca79a,11|14|0xc0b9ac,17|30|0x8d877b,29|34|0xa9a195",
-	90, 0, 0, 0)
-	--合并points ING
-	for i,item in ipairs(pointDeactive) do
-		table.insert(point,item)
+function Building:BuildingBegin()
+	Building:EnterCityList()
+	Building:FoldCity()
+	Building:RollToBegin()
+	local nextPos=155
+	local handleCityNum=0
+	while true do
+		handleCityNum=handleCityNum+1
+		tap(295,nextPos)--打开下一城市
+		local tmpCity=City:new()
+		tmpCity.pos.y=nextPos
+		ShowInfo.RunningInfo("处理第"..handleCityNum.."座城")
+		atEnd,nextPos=tmpCity:Run()
+		if atEnd then --最末城市结束
+			break
+		end
+		
 	end
-	ShowInfo.RunningInfo("获取到"..#point.."个城市")
-	local noNextPage=Building:AtBottom()
-	if #point ~= 0 then
-		for i,cityPos in pairs(point) do
-			Building:ExtractFoldCity(cityPos.y)
-			local tmpCity=City:new()
-			tmpCity.pos=cityPos
-			Building:AddCity(tmpCity)
-			mainCityX,mainCityY=Building:GetMainBuildingInCityList()
-			if mainCityY>0 then
-				--ShowInfo.RunningInfo("主城y:"..mainCityY..",当前"..cityPos.y)
-				if cityPos.y>mainCityY and cityPos.y-mainCityY<100 then
-					--奇怪的主城判定方法2333
-					tmpCity.IsMainCity=1
-					tmpCity.CityProperty="CityMain"
-				end
+	ShowInfo.RunningInfo("成功处理"..handleCityNum.."座城")
+end
+function Building:SelectNowFocus()
+	return Building:FindNowFocus()
+end
+function Building:FindNowFocus()
+	sleepWithCheckLoading(200)
+	local tryTime=0
+	while tryTime<10 do
+		local x, y = findColor({194, 71, 537, 1076}, 
+			"0|0|0xe0ab3f,0|27|0xdfa93e,0|57|0xda9f36,0|88|0xd4942e",
+			95, 0, 0, 0)
+		if x > -1 then
+			if y>850 then
+				Building:NextPage()
 			end
-			ShowInfo.RunningInfo("处理第"..i.."个城市"..(tmpCity.IsMainCity==1 and "(主城)" or "(分城)"))
-			tmpCity:Run()
-			Building:RollToBegin()
-			Building:FoldCity()
-		end
-		if noNextPage then 
-			return true
+			local x, y = findColor({194, 71, 537, 1076}, 
+			"0|0|0xe0ab3f,0|27|0xdfa93e,0|57|0xda9f36,0|88|0xd4942e",
+			95, 0, 0, 0)
+			return y
 		else
-			return false
-		end
-	else
-		return true
-	end
-	
-end
-
-function Building:AddCity(city)
-	if self.GetCity(city)>-1 then 
-		return false
-	end
-	self.cityList[#self.cityList]=city
-	return true
-end
-function Building:GetCity(city)
-	if self.cityList==nil then
-		return -1
-	end
-	for i=0,#self.cityList do
-		if self.cityList[i].id==city.id then 
-			return i
+			Building:NextPage()
+			tryTime=tryTime+1
 		end
 	end
 	return -1
@@ -135,21 +108,22 @@ function Building:SelectMainCity()
 	x2,y2=findColor({470, y+20, 540, y+100}, 
 		"0|0|0xffffff,1|1|0xffffff",
 		90, 0, 0, 0)
-		if x>0 and x2 > 0 then
-			sleepWithCheckLoading(500)
-			tap(x2,y2)
-			ShowInfo.RunningInfo("MainBuildingPos"..x2..","..y2)
-			Building:WaitMainBuildingLoading()
-		else
-			ShowInfo.RunningInfo("没有找到")
-		end
+	sysLog("MainBuildingPos"..x..","..y)
+	if x>0 and x2 > 0 then
+		sleepWithCheckLoading(500)
+		tap(x2,y2)
+		ShowInfo.RunningInfo("MainBuildingPos"..x2..","..y2)
+		Building:WaitMainBuildingLoading()
+	else
+		ShowInfo.RunningInfo("没有找到")
+	end
 end
 function Building:find()
 	return  findColor({9, 463, 135, 590}, 
 		"0|0|0x9c7143,20|31|0xcccbc3,43|50|0xcfcfc6",
 		95, 0, 0, 0)
 end
-function Building:WaitMainBuildingLoading()
+function Building:WaitMainBuildingLoading()--等待城市出现
 	local found=false
 	local checkTimes=0
 	while not found and checkTimes<5 do
@@ -224,14 +198,8 @@ function Building:EnterResList()
 end
 function Building:GetMainBuildingInResList()
 	return  findColor({412, 71, 465, 982}, 
-"0|0|0xffffff,4|8|0xffffff,3|18|0x304772,12|14|0x7e8daa",
-95, 0, 0, 0)
-end
-function Building:GetMainBuildingInCityList()
-	return  findColor({8, 75, 524, 1070}, 
-"0|0|0xdde2eb,7|10|0x5c7093,4|13|0x40557d",
-90, 0, 0, 0)
-
+"0|0|0x737e96,0|6|0xffffff,0|12|0x8f9fbe,0|18|0xffffff",
+85, 0, 0, 0)
 end
 function Building:EnterGeneral()
 	sleepWithCheckLoading(500)

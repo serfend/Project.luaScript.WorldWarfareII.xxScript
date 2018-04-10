@@ -1,3 +1,4 @@
+
 _isDebug = false
 _fitScreen=true
 _fsw, _fsh = getScreenSize()
@@ -6,25 +7,31 @@ _sh = _fsw - 1
 _userDpi=getScreenDPI()
 _orientation = 0--dialogRet("请选择您设备的放置方式：", "", "Home键在右", "Home键在左", 0)
 setSysConfig("isLogFile","1")
-printFunction("Global Value:")
-printFunction("_orientation:".._orientation, "_fsw:".._fsw, "_fsh:".._fsh, "_sw:".._sw, "_sh:".._sh)
-
-local supportSize = (_fsw == 1080 and _fsh == 1920) --检测是否支持该分辨率
+toast(_fsw .. "*" .. _fsh .. ":" .. _userDpi )
+sysLog(_fsw .. "*" .. _fsh .. ":" .. _userDpi )
+local supportSize=false
+	require "SettingBase.Screen"
+if _fsw==1080 and _fsh==1920 and _userDpi==480 then
+	supportSize=true
+else 
+	if _fsw==720 and _fsh==1280 and _userDpi==320 then
+		setScreenScale(1080,1920)
+		supportSize=true
+	else
+		supportSize=false
+	end
+end
 if not supportSize then
 	_fitScreen=false
 	choiceIfRun = dialogRet("不支持当前分辨率".._fsw.."*".._fsh.."\n 强制运行无法保证脚本功能能够正常运转", "停止运行", "强制运行", "", 0)
 	if choiceIfRun == 0 then
-	lua_exit();
+		lua_exit();
 	end
 	if choiceIfRun == 1 then
-	setScreenScale(1080,1920,0)
+		SettingACheck:UseScreenConfig(720)
 	end
 end
-toast(_fsw .. "*" .. _fsh .. ":" .. _userDpi )
-if(_userDpi~=480) then 
-	_fitScreen=false
-	dialog("可能不支持的dpi:".._userDpi.."，建议修改为480后再启动游戏")
-end
+
 --local checkAssistant = appIsRunning("com.xxAssistant");--检测叉叉助手是否在运行
 --if checkAssistant == 0 then
 --  choice = dialogRet("请打开叉叉助手","取消","确定","",0);

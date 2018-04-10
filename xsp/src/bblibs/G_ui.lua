@@ -138,7 +138,7 @@ function ui:new(width,height,okname,cancelname,config)
 	self["cancelname"] 	= cancelname or "退出"
 	self["width"] 		= tonumber(width)*0.95 or w_*0.95
 	self["height"] 		= tonumber(height)*0.95 or h_*0.95
-	self["config"] 		= config or "config_cus.dat"
+	self["config"] 		= config or "Setting6Config.dat"
   if ui_ref then self["bg"] = "ref_line.png" end
   ref_width = 0.1*self["width"]
   box_width = self["width"] 
@@ -223,22 +223,21 @@ end
 
 
 
-function ui:addRadioBoxGroup(index_w,index_h,id,def_value,...)--添加选择控件
+function ui:addRadioBoxGroup(index_w,index_h,id,def_value,optList)--添加选择控件
   local size = math.floor(0.4*ref_size)
 	local w,h = math.floor(index_w*ref_width),math.floor(0.8*index_h*ref_size)
 	local rect = self:rect_free(w,h)
-  local tab = {...}
 	local arr = {
 		["type"] 	= "RadioGroup",
 		["id"] 		= id,
-		["list"] 	= table.concat(tab,","),
+		["list"] 	= table.concat(optList,","),
 		["select"] 	= def_value,
 		["width"]	= width,
     ["size"]    = size,
     rect = rect
 	}
-	tab.RC = true
-	self.tmp[id] = tab
+	optList.RC = true
+	self.tmp[id] =optList
 	table.insert(self.views,arr)
 end
 function ui:addCheckBoxGroup(index_w,index_h,id,def_value,...)--添加选择控件
