@@ -13,13 +13,11 @@ local supportSize=false
 	require "SettingBase.Screen"
 if _fsw==1080 and _fsh==1920 and _userDpi==480 then
 	supportSize=true
-else 
-	if _fsw==720 and _fsh==1280 and _userDpi==320 then
-		setScreenScale(1080,1920)
-		supportSize=true
-	else
-		supportSize=false
-	end
+elseif  _fsw==720 and _fsh==1280 and _userDpi==320 then
+	setScreenScale(1080,1920)
+	supportSize=true
+else
+	supportSize=false
 end
 if not supportSize then
 	_fitScreen=false
@@ -27,9 +25,7 @@ if not supportSize then
 	if choiceIfRun == 0 then
 		lua_exit();
 	end
-	if choiceIfRun == 1 then
-		SettingACheck:UseScreenConfig(720)
-	end
+	setScreenScale(1080,1920)
 end
 
 --local checkAssistant = appIsRunning("com.xxAssistant");--检测叉叉助手是否在运行

@@ -2,9 +2,13 @@
 Skill = {
 	nowState=0,UserEnableAutoCollect=false,
 	useSkills={},NowSkillNum=0,UserEnableUseSkill=false,
+	NowUseSkillIndex=1,
+	nowSkillPoint=0,maxSkillPoint=0,
+	
+	MaxAssertSkillPoint=100,NowAssertSkillPoint=0,
 }--初始化
- 	posX=1360
-	beginY,endY=980,150
+ 	posX=1500
+	beginY,endY=500,200
 function Skill:new (o)
     o = o or {}
     setmetatable(o, self)
@@ -12,15 +16,22 @@ function Skill:new (o)
     return o
 end
 function Skill:setUseSkill(userSetting)
-	local newSkillList=userSetting["使用策略"]
+	local skillQueueNum=tonumber(userSetting["Skill.UsedSkillQueueNum"])
 	self.useSkills={}
 	self.NowSkillNum=0
-	for k,v in pairs(newSkillList) do
-		self.NowSkillNum=self.NowSkillNum+1
-		self.useSkills[self.NowSkillNum]=tostring(k)
+	self.NowUseSkillIndex=1
+	for i=1,skillQueueNum do
+		if userSetting["Skill.Queue"..i..".Enable"] =="0" then
+			self.NowSkillNum=self.NowSkillNum+1
+			self.useSkills[self.NowSkillNum]=userSetting["Skill.Queue"..i..".SkillIndex"]
+			sysLog("策略队列"..self.NowSkillNum..":"..self.useSkills[self.NowSkillNum])
+		end
 	end
 	self.UserEnableAutoCollect =userSetting["UnitSkillRunEnable"]["策略点"]==true
 	self.UserEnableUseSkill =userSetting["UnitSkillRunEnable"]["策略使用"]==true
+	for key,item in pairs(result["Skill.SupplyCard"]) do
+		Setting.Skill.SupplyCard["card"..key]=item
+	end
 end
 function Skill:Run()
 	sleepWithCheckLoading(500)
@@ -29,9 +40,6 @@ function Skill:Run()
 		if self:Enter() then
 			if self.UserEnableAutoCollect then 
 				local attainStatus,SkillPointX,SkillPointY=self:AttainNewSkillPoint()			
-				if attainStatus==1 then 
-					self:Exit()
-				end
 			else
 				ShowInfo.RunningInfo("技能点获取被禁用")
 			end
@@ -50,7 +58,7 @@ function Skill:Run()
 				ShowInfo.RunningInfo("初始化技能失败!")
 			end
 			sleepWithCheckLoading(500)
-			return self:Run()
+			return false
 		end
 		
 	else
@@ -108,7 +116,12 @@ function Skill:NeedRefresh()
 	return flag;
 end
 function Skill:CheckIfAnySkillBeenSelect()
-	tap(1314,836)
+	x, y = findColor({1300, 821, 1331, 849}, 
+	"0|0|0xf4fcff,15|0|0x993333,-15|0|0x993333",
+	95, 0, 0, 0)
+	if x > -1 then
+		tap(x,y)
+	end
 end
 function Skill:CheckPointNotEnough(y)
 		x, y = findColor({1650, y, 1715, y+100}, 
@@ -123,6 +136,7 @@ end
 function Skill:Enter()
 	ShowInfo.RunningInfo("打开技能")
 	if self:SkillPageIsOn() then 
+		ShowInfo.RunningInfo("已在技能界面")
 		return true
 	end
 	x,y=self:FindSkillPoint1()
@@ -130,16 +144,30 @@ function Skill:Enter()
 	if x>-1 then
 		Skill.nowState=1
 		tap(x,y)
-		sleepWithCheckLoading(500)
+		sleepWithCheckLoading(800)
+		self:RefreshSkillPointValue()
 		return true
 	else
 		if self:Exit() then
-			sleepWithCheckLoading(1500)
+			sleepWithCheckLoading(800)
 			return self:Enter()
 		else
 			ShowInfo.RunningInfo("未找到技能块")
 		end
 		return false
+	end
+end
+function Skill:RefreshSkillPointValue()
+	local ocrCode,result=ocr:GetNum(1460,48,1630,80)
+	if ocrCode==0 then
+		local tmp=split(result,"/")
+		self.MaxAssertSkillPoint=tonumber(tmp[2])
+		self.NowAssertSkillPoint=tonumber(tmp[1])
+		sysLog("当前技能点:"..self.NowAssertSkillPoint.."/"..self.MaxAssertSkillPoint)
+	else
+		ShowInfo.RunningInfo("识别技能数值错误")
+		self.MaxAssertSkillPoint=-1
+		self.NowAssertSkillPoint=-1
 	end
 end
 function Skill:Exit()
@@ -157,25 +185,33 @@ function Skill:Exit()
 		return false
 	end
 end
---[[
-	1-5:军费,钢铁,橡胶,石油,人口
-]]
-skillList={
-	["军费"]="0|0|0xffffcc,8|16|0xffffcc,20|19|0xffffcc,36|24|0xfefecb,46|13|0xffffcc,65|16|0xffffcc,82|13|0xffffcc,102|6|0xfafac8,110|16|0xffffcc,139|8|0xffffcc",
-	["钢铁"]="0|0|0xffffcc,2|10|0xfefecb,2|19|0xfdfdca,19|15|0xffffcc,28|14|0xffffcc,42|16|0xfcfcca,62|17|0xffffcc,84|12|0xfefecc,110|8|0xfefecc,128|20|0xffffcc",
-	["橡胶"]="0|0|0xffffcc,30|5|0xffffcc,5|8|0xfdfdca,87|16|0xffffcc,119|19|0xffffcc,128|20|0xffffcc,8|14|0xfbfac8,-10|11|0xffffcc,50|20|0xffffcc,76|6|0xffffcc",
-	["石油"]="0|0|0xffffcc,-4|27|0xffffcc,18|27|0xffffcc,75|26|0xffffcc,55|26|0xffffcc,96|10|0xffffcc,129|14|0xffffcc,137|-5|0xffffcc,79|-3|0xfefecb,52|4|0xffffcc",
-	["人口"]="0|0|0xffffcc,-14|31|0xffffcc,16|29|0xffffcc,46|32|0xffffcc,86|19|0xffffcc,137|16|0xffffcc,98|7|0xffffcc,82|-1|0xffffcc,50|9|0xffffcc,2|12|0xffffcc",
-}
+
 
 function Skill:UseSkills()
-	sleepWithCheckLoading(500)
-	ShowInfo.RunningInfo("使用技能...")
-	printTable(self.useSkills)
-	for i,skill in ipairs(self.useSkills) do
-		Skill:Enter()
-		Skill:UseSkill(skill)
+	sleepWithCheckLoading(300)
+	if self.NowSkillNum==0 then
+		
+	else
+		local successUsed=true
+		local lastTimeQueueIndex=self.NowUseSkillIndex
+		while successUsed do
+			if not self:Enter() then
+				return false
+			end
+			self.NowUseSkillIndex=self.NowUseSkillIndex+1
+			if self.NowUseSkillIndex>self.NowSkillNum then
+				self.NowUseSkillIndex=1
+			end
+			ShowInfo.RunningInfo("技能队列"..self.NowUseSkillIndex)
+			successUsed=self:UseSkill(self.useSkills[self.NowUseSkillIndex])
+			sysLog(self.NowUseSkillIndex.."/"..lastTimeQueueIndex)
+			if self.NowUseSkillIndex==lastTimeQueueIndex then
+				
+				break
+			end
+		end
 	end
+	ShowInfo.RunningInfo("策略释放结束")
 end
 function Skill:UseSkill(index)
 	
@@ -188,20 +224,25 @@ function Skill:UseSkill(index)
 		findTime=findTime+1
 		sleepWithCheckLoading(500)
 		ShowInfo.RunningInfo("使用技能"..index)
-		local x, y = findColor({posX, endY, 1920, beginY}, 
+		local x, y = findColor({posX, endY, 1700, beginY}, 
 		skillList[index],
 		90, 0, 0, 0)
 		if x > -1 then
 			findSkill=true
-			if Skill:CheckPointNotEnough(y) then
-				ShowInfo.RunningInfo("技能"..index.."策略值不足")
-				return false
+			while self:CheckPointNotEnough(y) do
+				if not self:UseSkillPointSupplyCard() then
+					ShowInfo.RunningInfo("技能"..index.."策略值不足")
+					return true--虽然不可用，但还是当做成功使用
+				else
+					
+					break
+				end
 			end
 			tap(x,y)
 			sleepWithCheckLoading(200)
 			if not self.SkillCanRelease() then 
 				ShowInfo.RunningInfo("技能"..index.."不可用")
-				return false
+				return true--虽然不可用，但还是当做成功使用
 			end
 			Building:SelectMainCity()
 			tap(960,540)--屏幕中心是主城
@@ -210,19 +251,67 @@ function Skill:UseSkill(index)
 			ShowInfo.RunningInfo("使用技能"..index.."完成")
 			sleepWithCheckLoading(500)
 		else
-			self.NextSkillPage()
-			if Skill:AtButtomSkill() then 
+			self:NextSkillPage()
+			if self:AtButtomSkill() then 
 				if beenTwiceAtButtom then
 					ShowInfo.RunningInfo("未找到技能"..index)
-					return false
+					return true--虽然不可用，但还是当做成功使用
 				else
 					beenTwiceAtButtom=true
-					Skill:RollToBegin()
+					self:RollToBegin()
 				end
 			end
 		end
 	end
 	return true
+end
+function Skill:UseSkillPointSupplyCard()
+	local successUsed=false
+	if Setting.Skill.SupplyCard.card50 or Setting.Skill.SupplyCard.card100 or Setting.Skill.SupplyCard.card200 then
+		tap(1667,67)--进入策略卡使用页面
+		sleepWithCheckLoading(100)
+		if Setting.Skill.SupplyCard.card200 then
+			successUsed=self:UseCard(3)
+		end
+		if successUsed==false and Setting.Skill.SupplyCard.card100 then
+			successUsed=self:UseCard(2)
+		end
+		if successUsed==false and Setting.Skill.SupplyCard.card50 then
+			successUsed=self:UseCard(1)
+		end
+	end
+	tap(1526,141)--退出策略卡界面
+	return successUsed
+end
+function Skill:GetCardPos(index)
+	return 240+index*200
+end
+function Skill:UseCard(index)
+	if self:CheckCardLeft(index) then
+		tap(1400,Skill:GetCardPos(index))--使用
+		return true
+	else
+		if Setting.Skill.SupplyCard.card不足时购买 then
+			if Setting.Main.Res.Diamond>50*index+50 then
+				tap(1400,Skill:GetCardPos(index))--购买
+				mSleep(100)
+				tap(970,650)--购买确认
+				ShowInfo.RunningInfo("购买策略卡"..index)
+				return true
+			else
+				ShowInfo.RunningInfo("钻石不足以购买策略卡"..index)
+				return false
+			end
+		else
+			return false
+		end
+	end
+end
+function Skill:CheckCardLeft(index)
+	x, y = findColor({1310, Skill:GetCardPos(index), 1527, Skill:GetCardPos(index)+60}, 
+	"0|0|0xfbc01d",
+	90, 0, 0, 0)
+	return (x>-1)
 end
 function Skill:SkillCanRelease()
 		x, y = findColor({1098, 961, 1335, 1048}, 
@@ -236,8 +325,13 @@ function Skill:SkillCanRelease()
 end
 function Skill:RollToBegin()
 	ShowInfo.RunningInfo("初始化技能")
+	local tryTime=0
 	while not Skill:AtTopSkill() do
 		Skill:LastSkillPage()
+		tryTime=tryTime+1
+		if tryTime>=5 then
+			break
+		end
 	end
 end
 function Skill:SkillPageIsOn()
@@ -251,7 +345,7 @@ function Skill:SkillPageIsOn()
 	end
 end
 function Skill:AtTopSkill()
-		x, y = findColor({1361, 167, 1907, 260}, 
+		x, y = findColor({1850, 150, 1860, 200}, 
 	"0|0|0x44413c",
 	95, 0, 0, 0)
 	if x > -1 then
@@ -262,7 +356,7 @@ function Skill:AtTopSkill()
 	end
 end
 function Skill:AtButtomSkill()
-		x, y = findColor({1361, 800, 1907, 969}, 
+		x, y = findColor({1850, 800, 1860, 969}, 
 	"0|0|0x44413c",
 	95, 0, 0, 0)
 	if x > -1 then
@@ -273,8 +367,9 @@ function Skill:AtButtomSkill()
 	end
 end
 function Skill:LastSkillPage()
-	swip(posX,endY,posX,beginY,10)
+	mSleep(200)
+	swip(posX,endY,posX,beginY)
 end
 function Skill:NextSkillPage()
-	swip(posX,beginY,posX, endY,10)
+	swip(posX,beginY,posX, endY)
 end
