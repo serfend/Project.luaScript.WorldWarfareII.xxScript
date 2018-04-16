@@ -1,38 +1,48 @@
 require "usingPack"
 require "util"--加载工具
 require "SettingACheck"--加载全局设置
-skill=Skill:new{Interval=Skill["Interval"]}
-building = Building:new()
-gameTask=GameTask:new()
-messageHdl=Message:new()
-MainForm=Form:new()
+
 function main()
+
 	
 	UserSettingForm=UI:new()
-	start,userSetting=UserSettingForm.show()
-	skill:setUseSkill(userSetting)
+	start,userSetting=UserSettingForm:show()
 	if start==0 then 
 		return false;
 	end
-	if Setting.Building.TestModelSetting.Enable then
-		mainTest(Setting.Building.TestModelSetting.TestOption)
-		return true
-	end
+	skill=Skill:new{Interval=Skill["Interval"]}
+	building = Building:new()
+	gameTask=GameTask:new()
+	messageHdl=Message:new()
+	troop=Troop:new()
+	conscript=Conscript:new()
+	MainForm=Form:new()
+	ocr=OCR:new()
+	skill:setUseSkill(userSetting)
 	gameTask:NeedRefresh()
 	if Setting.Task.EnableAutoProcessTaskDuplicate then
 		gameTask.MainThreadTaskRefresh=false
 	end
+
 	mainLoop()
 end
 function mainLoop()
 	while(true) do
 		--messageHdl:Run()
-		MainForm:Exit()
+		if MainForm:Exit(true) then
+			mSleep(200)
+		end
+		if skill:Exit() then
+			mSleep(1000)
+		end
+		Init:GetNowDetail()
 		Setting.Main.Runtime=Setting.Main.Runtime+1
+--		conscript:Run()
 		
 		gameTask:Run()
 		skill:Run()
 		building:Run()
+		--conscript:Run()
 		
 		toast("本轮结束," .. Setting.Main.Interval .. "秒后开始")
 		mSleep(Setting.Main.Interval*1000)

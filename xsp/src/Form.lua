@@ -17,14 +17,41 @@ function Form:GetBuildingButton(buttonName)
 	
 	return x,y
 end
-function Form:Exit()
-	return Form:DoAction(Form.findExit,"退出界面")
+function Form:Exit(exitAll)
+	exitAll=exitAll or false
+	local success=true
+	while success  do
+		success=Form:DoAction(Form.findExit,"退出界面")
+		if not exitAll then
+			break
+		end
+	end
+	return success
 end
 function Form:Submit()
 	return Form:DoAction(Form.findSubmit,"提交(右下角）")
 end
 function Form:Build()
-	return Form:DoAction(Form.findBuild,"提交(重建/生产/组建)")
+	return Form:DoAction(Form.findBuild,"提交(重建)")
+end
+function Form:Manufacture(produceNum)
+	if produceNum~=nil then
+		Form:EditProduceNum(produceNum)
+	end
+	return Form:DoAction(Form.findBuild,"提交(生产/组建)")
+end
+function Form:EditProduceNum(num)
+		local x, y = findColor({1240, 400, 1300, 600}, 
+	"0|0|0xeaffff,-12|7|0xe0ffff",
+	95, 0, 0, 0)--编辑按钮
+	if x>-1 then
+		ShowInfo.RunningInfo("修改数值"..num)
+		tap(x,y)--进入编辑
+		mSleep(500)
+		inputText(tostring(num))
+		tap(x,y)--退出编辑
+		mSleep(500)
+	end
 end
 function Form:BuildAtMap()
 	if Form:CheckBuildNewRequire() then
@@ -79,22 +106,22 @@ function Form:findSubmit()
 95, 0, 0, 0)
 end
 function Form:findExit()
-	local x,y= findColor({1764, 0, 1919, 77}, 
-"0|0|0x993333,62|7|0x993333",
+	local x,y= findColor({1869, 0, 1919, 50}, 
+"0|0|0x993333,7|7|0x993333",
 90, 0, 0, 0)
 	if x<0 then
 		 x,y=findColor({486, 250, 1429, 756}, 
 		"0|0|0xdbdcd8,-4|33|0xc6cac5,181|35|0xc6c8c5,177|-6|0xdededb",
 		90, 0, 0, 0)
 	end
-	return x,y
+	return x,20
 end
 local randomRange=100
 function Form:CheckLoading(judgeTime)
 	judgeTime=judgeTime or 0
 	x, y = findColor({882, 438, 1037, 587}, 
 	"0|0|0xfde992,-7|5|0xfae890",
-	95, 0, 0, 0)
+	98, 0, 0, 0)
 	 
 	local posRandomX=math.random(-randomRange,randomRange)
 	local posRandomY=math.random(-randomRange,randomRange)
