@@ -14,7 +14,7 @@ City = {
 	},
 	IsMainCity=false,--是否是主城
 	CityProperty="233",
-	nowMainBuildingName="主城"
+	nowMainBuildingName="主城",
 }--初始化
 
 function City:new (o)
@@ -24,17 +24,22 @@ function City:new (o)
     return o
 end
 function City:CheckIfMainBuilding()
-		local x,y=  findColor({8, self.pos.y-150, 524, self.pos.y+60}, 
+	self:FindMainBuilding(self.pos.y-150, self.pos.y+60)
+end
+function City:FindMainBuilding(y1,y2)
+		local x,y=  findColor({8,y1 , 524,y2}, 
 	"0|0|0xdde2eb,7|10|0x5c7093,4|13|0x40557d",
 	90, 0, 0, 0)--寻找主城标识
 	if x>-1 then
 		sysLog("城市为主城")
 		self.IsMainCity=true
 		self.CityProperty="CityMain"
+		return y
 	else
 		sysLog("城市为分城")
 		self.IsMainCity=false
 		self.CityProperty="CityOther"
+		return -1
 	end
 end
 local maxBuildingPriorityRank=7
@@ -99,6 +104,7 @@ function City:FindNextAero()
 end
 local lastTimeFindResAero=false
 local isDoubleResAero=false
+local nowBuildingRank=1
 function City:RunBuilding(id)
 	sleepWithCheckLoading(500)
 	if Setting.Task.EnableActiveCollectEvent then
@@ -115,12 +121,13 @@ function City:RunBuilding(id)
 	if validBuilding==0 then
 		return false
 	end
-	for i=1,7 do
-		if i>maxBuildingPriorityRank then 
-			ShowInfo.RunningInfo("资源优化生效"..i.."取消")
+	printTable(AllFoundBuilding)
+	for nowBuildingRank=1,7 do
+		if nowBuildingRank>maxBuildingPriorityRank then 
+			ShowInfo.RunningInfo("资源优化生效"..nowBuildingRank.."取消")
 			break
 		end
-		if self:BuildBuildingInRank(i,id,AllFoundBuilding)==false then
+		if self:BuildBuildingInRank(nowBuildingRank,id,AllFoundBuilding)==false then
 			return true
 		end
 	end
@@ -152,32 +159,27 @@ function City:CheckBuildingQueue(id)
 	return true
 end
 function City:GetBuildingQueueFreeNum()
-	point = findColors({1121, 196, 1710, 403}, 
-	{
-		{x=0,y=0,color=0x18d80e},
-		{x=14,y=1,color=0x18d80e},
-		{x=12,y=-14,color=0x18d80e},
-		{x=-4,y=-14,color=0x18d80e},
-		{x=4,y=-17,color=0x18d80e},
-		{x=4,y=9,color=0x18d80e},
-	},
-	85, 0, 0, 0)
+	point = findColors({593, 229, 1650, 382}, 
+		"0|0|0x18d80e,6|0|0x18d80e,12|0|0x18d80e,18|0|0x18d80e",
+		90, 0, 0, 0)
 	point=exceptPosTableByNewtonDistance(point,50)
+	ShowInfo.RunningInfo("当前区域可建筑队列"..#point)
 	return #point 
 end
 function City:CheckImmediateBuilding()
 	local flag=false
 	x, y = findColor({1325, 279, 1882, 400}, 
 	"0|0|0xfafafa,-3|6|0xfbfbfb,2|14|0xf1f0ef,14|14|0xf1f0ef,17|6|0xfbfbfb,18|24|0xf5f4f3,30|25|0xf4f3f3,34|9|0xf9f8f8,45|2|0xfbfbfb,50|17|0xfbfbfa",
-	95, 0, 0, 0)
+	90, 0, 0, 0)
 	if x > -1 then
 		tap(x,y+70)
 		ShowInfo.RunningInfo("立即完成免费建筑")
 		sleepWithCheckLoading(200)
 		tap(961,800)
-		sleepWithCheckLoading(1200)
+		sleepWithCheckLoading(800)
 		flag=true
-		flag=flag or self:CheckImmediateBuilding()
+		nowBuildingRank=1
+		self:CheckImmediateBuilding()
 	end
 	return flag
 end
@@ -202,7 +204,7 @@ function City:ShowAllBuildingQueue()--调试方法，可不用
 end
 function City:BuildBuildingInRank(rank,CityOrField,ValidBuilding)
 	ShowInfo.RunningInfo("处理:".. (self.IsMainCity and "主城" or "分城")..(CityOrField=="City" and "城市" or "野地") ..rank.."级建筑")
-	printTable(ValidBuilding)
+	
 	for i,building in ipairs(Setting.Building[CityOrField]) do 
 		if math.abs(building[3-(self.IsMainCity and 1 or 0)])==rank and building[5-(self.IsMainCity and 1 or 0)]==true then
 			if building[1]~="none" then
@@ -217,16 +219,25 @@ function City:BuildBuildingInRank(rank,CityOrField,ValidBuilding)
 							end
 						else 
 							if canBuilding.Status=="可升级" then
-								canBuild=true
+								local BuildingIndex=Setting.Building[CityOrField.."Index"][building[1]]
+								local BuildingMaxLevel=Setting.Building[CityOrField][BuildingIndex][self.IsMainCity and 7 or 8]
+								if canBuilding.Level>=BuildingMaxLevel then
+									ShowInfo.RunningInfo("建筑"..building[1].."("..canBuilding.Level..")已达到等级上限"..BuildingMaxLevel)
+									canBuild=false
+								else
+									canBuild=true
+								end
 							else
 								canBuild=false
-								--ShowInfo.RunningInfo("建筑"..building[1].."("..canBuilding.Status..")被禁用"..building[3-self.IsMainCity])
+								--ShowInfo.RunningInfo("建筑"..building[1].."("..canBuilding.Status..")被禁用"..building[3-(self.IsMainCity and 1 or 0)])
 							end
 						end
 						break
 					end
 				end
-				if canBuild then 
+				if canBuild then
+					
+					
 					ShowInfo.RunningInfo("处理建筑"..rank..building[1])
 					local points=City:FindBuilding(building[1])
 					if #points>0 then
@@ -235,11 +246,11 @@ function City:BuildBuildingInRank(rank,CityOrField,ValidBuilding)
 							--ShowInfo.RunningInfo("x"..buildingX)
 							if buildingX>1650 then
 								swip(1850,647,1650,647)
-								mSleep(800)
+								mSleep(400)
 								buildingX=buildingX-200
 							end
 							tap(buildingX,650)
-							mSleep(200)
+							mSleep(300)
 							if not CityBuilding:UpLevel() then
 								CityBuilding:Rebuild()
 							end
@@ -253,7 +264,7 @@ function City:BuildBuildingInRank(rank,CityOrField,ValidBuilding)
 				end
 			end
 		else
-			--ShowInfo.RunningInfo("建筑"..building[1].."被禁用"..building[3-self.IsMainCity])
+			--ShowInfo.RunningInfo("建筑"..building[1].."被禁用"..building[3-(self.IsMainCity and 1 or 0)])
 		end
 	end
 	return true
@@ -275,12 +286,13 @@ function City:FindBuilding(BuildingName,findNextPage)--
 		end
 		local atButtom=false
 		atButtom= self:CheckOnButtom()
-		if atButtom then
-			findNextPage=false
-			sysLog("findBuildingAtButtom")
-		end
 		if not firstTimeSearch then
-			mSleep(1000)
+			mSleep(500)
+		else
+			if atButtom then
+				findNextPage=false
+				sysLog("findBuildingAtButtom")
+			end
 		end
 		firstTimeSearch=false
 
@@ -306,7 +318,7 @@ function City:FindBuilding(BuildingName,findNextPage)--
 	end
 end
 function City:FindBuildingAtCurrentPage(BuildingName)
-	return  findColors({550,480,1919,800}, 
+	return  findColors({550,650,1919,680}, 
 			BuildingInfoList[BuildingName] ,
 			90, 0, 0, 0)
 end
@@ -358,12 +370,16 @@ function City:GetPageValidBuilding(CityOrField)
 					findBuildingName=building[1]
 				end
 				--sysLog("寻找"..findBuildingName..":"..BuildingInfoList[findBuildingName])
-				buildingX,buildingY = findColor({549,612,1919,736}, 
-				BuildingInfoList[findBuildingName] ,
-				90, 0, 0, 0)
+				local buildingPoint=City:FindBuildingAtCurrentPage(findBuildingName)
+				if #buildingPoint>0 then
+					buildingX,buildingY = buildingPoint[1].x,buildingPoint[1].y
+				else
+					buildingX=-1
+				end
+				
 				--ShowInfo.RunningInfo(i.."/"..AllBuildingCount..building[1])
 				if buildingX>-1 then
-					--sysLog("找到"..findBuildingName)
+					sysLog("找到"..findBuildingName)
 					local tmpBuilding=CityBuilding:new()
 					if findBuildingName=="资源区" then
 						if not lastTimeFindResAero then
@@ -380,6 +396,7 @@ function City:GetPageValidBuilding(CityOrField)
 					end
 					if tmpBuilding.Name~="" then
 						tmpBuilding.Status=CityBuilding:GetBuildingStatus(buildingX)
+						tmpBuilding.Level=CityBuilding:GetBuildingLevel(buildingX)
 						if BuildingAeroMain[findBuildingName]~=nil then
 							self.nowMainBuildingName=findBuildingName
 						end
@@ -503,13 +520,14 @@ function City:RollToBegin()
 			return
 		end
 	end
+	mSleep(1000)
 end
 function City:NextPage()
 	sysLog("下一页")
 	if self:CheckOnButtom() then
 		return false
 	end
-	swip(1700,650,570,650)
+	swip(1700,650,570,650,5)
 	return not self:CheckOnButtom()
 end
 function City:LastPage()
@@ -517,7 +535,7 @@ function City:LastPage()
 	if self:CheckOnTop() then
 		return false
 	end
-	swip(570,650,1700,650)
+	swip(570,650,1700,650,5)
 	return not self:CheckOnTop()
 end
 function City:CheckOnTop()
@@ -532,7 +550,7 @@ function City:CheckOnTop()
 			return false
 		end
 	else
-		ShowInfo.RunningInfo("到达顶部")
+		--ShowInfo.RunningInfo("到达顶部")
 		return true
 	end
 end
@@ -543,7 +561,7 @@ function City:CheckOnButtom()
 	if x > -1 then
 		return false
 	else
-		ShowInfo.RunningInfo("到达底部")
+		--ShowInfo.RunningInfo("到达底部")
 		return true
 	end
 end

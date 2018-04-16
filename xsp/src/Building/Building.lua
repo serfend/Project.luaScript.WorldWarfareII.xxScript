@@ -21,7 +21,10 @@ function Building:Run()
 		ShowInfo.RunningInfo("城市建设被禁用")
 		return false
 	end
-	self:Enter()
+	if not self:Enter() then
+		ShowInfo.RunningInfo("进入城市界面失败")
+		return false
+	end
 	Building:BuildingBegin()
 	self:Exit()
 end
@@ -118,6 +121,13 @@ function Building:SelectMainCity()
 		ShowInfo.RunningInfo("没有找到")
 	end
 end
+function Building:SelectMainCityBuilding()
+	Building:Enter()
+	Building:EnterCityList()
+	Building:FoldCity()
+	local mainCityPosY=City:FindMainBuilding(0,1080)
+	tap(100,mainCityPosY)
+end
 function Building:find()
 	return  findColor({9, 463, 135, 590}, 
 		"0|0|0x9c7143,20|31|0xcccbc3,43|50|0xcfcfc6",
@@ -149,11 +159,17 @@ function Building:WaitMainBuildingLoading()--等待城市出现
 end
 function  Building:Enter()
 	ShowInfo.RunningInfo("进入内政")
-	x,y=self.find()
+	local x,y=self:find()
 	if x>-1 then
 		tap(x,y)
-		self.nowState=1
-		return true
+		mSleep(200)
+		x,y=self:find()
+		if x>-1 then
+			return false
+		else
+			return true
+		end
+
 	else
 		return false
 	end

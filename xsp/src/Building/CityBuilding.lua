@@ -58,7 +58,6 @@ end
 function CityBuilding:GetBuildingStatus(buildingX)
 	keepScreen(true)
 	for i,statuInfo in ipairs(BuildingStatusList) do
-		--sysLog("x"..buildingX)
 		x, y = findColor({buildingX-100, 546, buildingX+100, 582}, 
 			statuInfo[2],
 			95, 0, 0, 0)
@@ -69,6 +68,30 @@ function CityBuilding:GetBuildingStatus(buildingX)
 	end
 	keepScreen(false)
 	return "资源不足"
+end
+function CityBuilding:GetBuildingLevel(buildingX)
+	local x, y = findColor({buildingX+100, 730, buildingX+180, 770}, 
+			"0|0|0xffffff",
+			95, 0, 0, 0)--找到字母L以确定等级起始
+	if x>0 then
+		local x1,y1,x2,y2=x+37,738,x+67,770
+		--showRect(x1,y1,x2,y2,5000)
+		local code,cityLevelRaw=ocr:GetNumBold(x1,y1,x2,y2)
+		if code~=0 then
+			sysLog("等级识别失败"..code)
+		else
+			cityLevel=tonumber(cityLevelRaw)
+			if cityLevel==nil then
+				sysLog("等级识别错误"..code)
+				cityLevel=0
+			end
+			sysLog("x:"..x..",level:"..cityLevel)
+			return tonumber(cityLevel)
+		end
+	else
+		sysLog("no Level Found")
+		return 0
+	end
 end
 function CityBuilding:CheckRepair()
 	x, y =Form:GetBuildingButton("修理")
