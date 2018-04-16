@@ -105,7 +105,7 @@ end
 local read = function(tmp,retTable)
 	local retTable = retTable
 	for k,v in pairs(retTable) do 
-		local tmp_k = tmp[k]
+		local tmp_k = tmp[k] or {}
 		if tmp_k.CK then
 			local tab = split(v)
 			retTable[k] = {}
@@ -240,45 +240,44 @@ function ui:addRadioBoxGroup(index_w,index_h,id,def_value,optList)--添加选择
 	self.tmp[id] =optList
 	table.insert(self.views,arr)
 end
-function ui:addCheckBoxGroup(index_w,index_h,id,def_value,...)--添加选择控件
+function ui:addCheckBoxGroup(index_w,index_h,id,def_value,selectList)--添加选择控件
   local size = math.floor(0.4*ref_size)
 	local w,h = math.floor(index_w*ref_width),math.floor(0.8*index_h*ref_size)
 	local rect = self:rect_free(w,h)
 	--sysLog(rect)
-  local tab = {...}
 	local arr = {
 		["type"] 	= "CheckBoxGroup",
 		["id"] 		= id,
-		["list"] 	= table.concat(tab,","),
+		["list"] 	= table.concat(selectList,","),
 		["select"] 	= def_value,
 		["width"]	= width,
     ["size"]    = size,
     rect = rect
 	}
-	tab.CK = true
-	self.tmp[id] = tab
+	selectList.CK = true
+	self.tmp[id] = selectList
 	table.insert(self.views,arr)
 end
-function ui:addCheckBoxGroup_single(index_w,index_h,id,def_value,...)--添加选择控件
+function ui:addCheckBoxGroup_single(index_w,index_h,id,def_value,checkValue)--添加选择控件
   local size = math.floor(0.48*ref_size)
 	local w,h = math.floor(index_w*ref_width),math.floor(0.8*index_h*ref_size)
 	local rect = self:rect_free(w,h)
 	--sysLog(rect)
-  local tab = {...}
+	local tab={checkValue}
 	local arr = {
 		["type"] 	= "CheckBoxGroup",
 		["id"] 		= id,
-		["list"] 	= table.concat(tab,","),
+		["list"] 	= tab[1],
 		["select"] 	= def_value,
 		["width"]	= width,
     ["size"]    = size,
     rect = rect
 	}
 	tab.CK = true
-	self.tmp[id] = tab
+	self.tmp[id] = selectList
 	table.insert(self.views,arr)
 end
-function ui:addLebel(index_w,index_h,text,size,align,color,extra)
+function ui:addLabel(index_w,index_h,text,size,align,color,extra)
   local size = size or 35
   local size = math.floor(size*ui_scale) or math.floor(0.6*ref_size)
   local w = math.floor(index_w*ref_width)
@@ -295,41 +294,22 @@ function ui:addLebel(index_w,index_h,text,size,align,color,extra)
 	}
 	table.insert(self.views,arr)
 end
-function ui:addLebel_center(index_w,index_h,text,size,align,color,extra)
-  local size = size or 18
-  if is_ios then size = seze or 25 end
-  local size = math.floor(size*ui_scale) or math.floor(0.6*ref_size)
-  local w = math.floor(index_w*ref_width)
-  local h = math.floor(0.8*index_h*ref_size)
-	local rect = self:rect_center(w,h)
-	local arr = {
-		["type"]    = "Label",
-		["text"]    = text,
-		["size"]    = size,
-		["align"]   = align or "left" ,
-		["color"]   = color or "230,230,230",
-    ["extra"]   = extra,
-    rect = rect
-	}
-	table.insert(self.views,arr)
-end
 
-function ui:addComboBox(index_w,index_h,id,def_value,...)--添加选择控件
+function ui:addComboBox(index_w,index_h,id,def_value,selectList)--添加选择控件
   local w,h = index_w*ref_width,math.floor(0.7*index_h*ref_size)
   if is_ios then h = math.floor(0.65*index_h*ref_size) end
 	local rect = self:rect_free(w,h)
-  local tab = {...}
 	local arr = {
 		["type"] 	= "ComboBox",
 		["id"] 		= id,
-		["list"] 	= table.concat(tab,","),
+		["list"] 	= table.concat(selectList,","),
 		["select"] 	= def_value,
 		["width"]	= width,
     ["size"]    = math.floor(0.33*ref_size),
     rect = rect
 	}
-	tab.RC = true
-	self.tmp[id] = tab
+	selectList.RC = true
+	self.tmp[id] = selectList
 	table.insert(self.views,arr)
 end
 function ui:addEdit(index_w,index_h,id,def_value,prompt,kbtype,size,align,color)--添加编辑框
