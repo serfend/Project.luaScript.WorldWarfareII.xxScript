@@ -40,6 +40,18 @@ function Form:Manufacture(produceNum)
 	end
 	return Form:DoAction(Form.findBuild,"提交(生产/组建)")
 end
+function Form:GetNowManufactureNum()
+	local x,y=Form:findBuild()
+	local result=-1
+	if y>760 then
+		code,result=ocr:GetNum(1051,587,1135,617)
+		sysLog("获取到组建数量"..result)
+	else
+		code,result=ocr:GetNum(1031,403,1149,443)
+		sysLog("获取到生产数量"..result)
+	end
+	return tonumber(result)
+end
 function Form:EditProduceNum(num)
 		local x, y = findColor({1240, 400, 1300, 600}, 
 	"0|0|0xeaffff,-12|7|0xe0ffff",
@@ -106,15 +118,11 @@ function Form:findSubmit()
 95, 0, 0, 0)
 end
 function Form:findExit()
-	local x,y= findColor({1869, 0, 1919, 50}, 
+	local x,y= findColor({1869, 0, 1919, 50}, --右上角退出
 "0|0|0x993333,7|7|0x993333",
 90, 0, 0, 0)
-	if x<0 then
-		 x,y=findColor({486, 250, 1429, 756}, 
-		"0|0|0xdbdcd8,-4|33|0xc6cac5,181|35|0xc6c8c5,177|-6|0xdededb",
-		90, 0, 0, 0)
-	end
-	return x,20
+	
+	return x,y+10
 end
 local randomRange=100
 function Form:CheckLoading(judgeTime)

@@ -54,16 +54,18 @@ function City:Run()
 	end
 	self:RunBuilding("City")--城市建设
 	self:CheckIfSupplyInsufficient()--判断补给
---	if self.pos.y>800 then
---		mSleep(200)
---		swip(20,800,20,500,10)
---		self.pos.y=self.pos.y-300
---	end
+	if self.pos.y>800 then
+		mSleep(300)
+		swip(20,800,20,500,10)
+		self.pos.y=self.pos.y-300
+		mSleep(1500)
+	end
 	while true do
 		local nextX,nextY=City:FindNextAero()
-		ShowInfo.RunningInfo("寻找下个区域")
+		
+		ShowInfo.RunningInfo("寻找下个区域:"..nextY)
 		if nextX>-1 then
-			tap(nextX,nextY)
+			tap(150,nextY)
 			if nextY>800 then
 				mSleep(300)
 				swip(20,800,20,500,10)
@@ -97,7 +99,7 @@ function City:FindNextCity()
 	return y
 end
 function City:FindNextAero()
-	x, y = findColor({442, 77, 531, 1074}, 
+	x, y = findColor({442, 186, 531, 1074}, 
 	"0|0|0xa39380,-476|4|0x42332a,0|-71|0x8d6828,-479|-60|0x3e332a,-13|-45|0x8a6223,14|-7|0xa39380",
 	90, 0, 0, 0)
 		return x,y
@@ -124,8 +126,7 @@ function City:RunBuilding(id)
 	printTable(AllFoundBuilding)
 	for nowBuildingRank=1,7 do
 		if nowBuildingRank>maxBuildingPriorityRank then 
-			ShowInfo.RunningInfo("资源优化生效"..nowBuildingRank.."取消")
-			break
+			ShowInfo.RunningInfo("资源优化生效:"..nowBuildingRank)
 		end
 		if self:BuildBuildingInRank(nowBuildingRank,id,AllFoundBuilding)==false then
 			return true
@@ -206,27 +207,34 @@ function City:BuildBuildingInRank(rank,CityOrField,ValidBuilding)
 	ShowInfo.RunningInfo("处理:".. (self.IsMainCity and "主城" or "分城")..(CityOrField=="City" and "城市" or "野地") ..rank.."级建筑")
 	
 	for i,building in ipairs(Setting.Building[CityOrField]) do 
-		if math.abs(building[3-(self.IsMainCity and 1 or 0)])==rank and building[5-(self.IsMainCity and 1 or 0)]==true then
+		local buildingBuildEnable=building[5-(self.IsMainCity and 1 or 0)] and (maxBuildingPriorityRank>=rank)
+		if math.abs(building[3-(self.IsMainCity and 1 or 0)])==rank then
 			if building[1]~="none" then
 				local canBuild=false
 				for j,canBuilding in ipairs(ValidBuilding) do
 					if canBuilding.Name==building[1] then
 						if canBuilding.Status=="资源不足"  then
-							canBuild=false
-							if Setting.Building[self.CityProperty.."Setting"].SkipWhenHigherPriorityBuilingIsLackOfRescource then
-								ShowInfo.RunningInfo("禁低于"..rank.."的建筑")
-								maxBuildingPriorityRank=rank
+							if buildingBuildEnable then
+								canBuild=false
+								if Setting.Building[self.CityProperty.."Setting"].SkipWhenHigherPriorityBuilingIsLackOfRescource then
+									ShowInfo.RunningInfo("禁低于"..rank.."的建筑")
+									maxBuildingPriorityRank=rank
+								end
 							end
 						else 
 							if canBuilding.Status=="可升级" then
-								local BuildingIndex=Setting.Building[CityOrField.."Index"][building[1]]
-								local BuildingMaxLevel=Setting.Building[CityOrField][BuildingIndex][self.IsMainCity and 7 or 8]
-								if canBuilding.Level>=BuildingMaxLevel then
-									ShowInfo.RunningInfo("建筑"..building[1].."("..canBuilding.Level..")已达到等级上限"..BuildingMaxLevel)
-									canBuild=false
-								else
-									canBuild=true
+								if buildingBuildEnable then
+									local BuildingIndex=Setting.Building[CityOrField.."Index"][building[1]]
+									local BuildingMaxLevel=Setting.Building[CityOrField][BuildingIndex][self.IsMainCity and 7 or 8]
+									if canBuilding.Level>=BuildingMaxLevel then
+										ShowInfo.RunningInfo("建筑"..building[1].."("..canBuilding.Level..")已达到等级上限"..BuildingMaxLevel)
+										canBuild=false
+									else
+										canBuild=true
+									end
 								end
+							elseif canBuilding.Status=="重建" then
+								canBuild=true
 							else
 								canBuild=false
 								--ShowInfo.RunningInfo("建筑"..building[1].."("..canBuilding.Status..")被禁用"..building[3-(self.IsMainCity and 1 or 0)])
@@ -236,8 +244,6 @@ function City:BuildBuildingInRank(rank,CityOrField,ValidBuilding)
 					end
 				end
 				if canBuild then
-					
-					
 					ShowInfo.RunningInfo("处理建筑"..rank..building[1])
 					local points=City:FindBuilding(building[1])
 					if #points>0 then
@@ -299,7 +305,7 @@ function City:FindBuilding(BuildingName,findNextPage)--
 		points=self:FindBuildingAtCurrentPage(BuildingName)
 		ShowInfo.RunningInfo(BuildingName.."找到"..#points.."个点")
 		if #points > 0 then
-			points= exceptPosTableByNewtonDistance(points,100)
+			points= exceptPosTableByNewtonDistance(points,200)
 			ShowInfo.RunningInfo(BuildingName.."处理后剩余"..#points.."个点")
 			return points
 		else
@@ -318,7 +324,7 @@ function City:FindBuilding(BuildingName,findNextPage)--
 	end
 end
 function City:FindBuildingAtCurrentPage(BuildingName)
-	return  findColors({550,650,1919,680}, 
+	return  findColors({550,660,1919,665}, 
 			BuildingInfoList[BuildingName] ,
 			90, 0, 0, 0)
 end
@@ -332,8 +338,8 @@ function City:GetAeraAllValidBuilding(CityOrField)--寻找可用建筑算法可�
 		
 		local thisValidBuildingNum=0
 		for i,building in ipairs(tmpBuilding) do
-		if building.Status=="可升级" or building.Status=="资源不足" then
-				if building.Status=="可升级" then 
+		if building.Status=="可升级" or building.Status=="资源不足" or building.Status=="重建" then
+				if building.Status=="可升级" or building.Status=="重建" then 
 					thisValidBuildingNum=thisValidBuildingNum+1
 				end
 				table.insert(AllValidBuilding,building)
@@ -400,7 +406,7 @@ function City:GetPageValidBuilding(CityOrField)
 						if BuildingAeroMain[findBuildingName]~=nil then
 							self.nowMainBuildingName=findBuildingName
 						end
-						if tmpBuilding.Status=="可升级" then
+						if tmpBuilding.Status=="可升级" or tmpBuilding.Status=="重建" then
 							sysLog("发现建筑:"..tmpBuilding.Name.."在"..buildingX)
 						else
 							sysLog(tmpBuilding.Name.."条件不符合:"..tmpBuilding.Status.."在"..buildingX)

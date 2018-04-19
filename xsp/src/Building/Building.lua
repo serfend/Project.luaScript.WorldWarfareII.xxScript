@@ -16,7 +16,7 @@ function Building:Run()
 	if Setting.Building.CityOtherSetting.EnableTransportRescouseToMainCity then
 		sysLog("2333")
 	end
-	gameTask:NeedRefresh()
+	gameTask:NeedRefresh()--判断是否需要取野地事件
 	if Setting.Building.CityMainSetting.EnableAutoDevelop==false and Setting.Building.CityOtherSetting.EnableAutoDevelop==false then
 		ShowInfo.RunningInfo("城市建设被禁用")
 		return false

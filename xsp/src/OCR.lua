@@ -1,5 +1,5 @@
 OCR = {
-	ocrNum,ocrNumBold,ocrString, msg = nil,nil,nil
+	ocrNum,ocrNumBold, msg = nil,nil,nil
 }--初始化
 function OCR:showError()
 	dialog("加载字库错误:"..self.msg)
@@ -15,14 +15,6 @@ function OCR:new (o)
 		lang = "num" -- 使用生成的num.traineddata文件
 	})
 	if self.ocrNum==nil then
-		self:showError()
-	end
-	self.ocrString,self.msg=createOCR({
-		type = "tesseract",
-		path = "[external]", 
-		lang = "eng" 
-	})
-	if self.ocrString==nil then
 		self:showError()
 	end
 	self.ocrNumBold,self.msg=createOCR({
@@ -59,16 +51,6 @@ function OCR:GetString(x1,y1,x2,y2,foreColor)
 	local code, text = self.ocrString:getText({
 		rect = rect,
 		diff = diff,
-	})
-	return code ,text
-end
-function OCR:GetStringInNum(x1,y1,x2,y2,foreColor)
-	local rect = {x1, y1, x2, y2}
-	local diff = {foreColor or "0xffffff-0x0f0f0f"}
-	local code, text = self.ocrString:getText({
-		rect = rect,
-		diff = diff,
-		whitelist="0123456789/M",
 	})
 	return code ,text
 end

@@ -1,10 +1,6 @@
 --初始化游戏所需全局参数
 Init={}
-ArmySetting={
-	TroopSetting={
-		
-	}
-}
+
 BuildingAeroMain={
 	主城=1,村庄=1,港口=1,军事区=1,资源区=1
 }
@@ -105,10 +101,53 @@ Setting={
 			TestOption="",
 		}
 	},
-
+	Army={
+		Enable={},
+		army={
+			[1]={"步兵"},
+			[2]={"侦查车"},
+			[3]={"盟轻坦"},
+			[4]={"德轻坦"},
+			[5]={"反坦克"},
+			[6]={"盟摩托"},
+			[7]={"德摩托"},
+			[8]={"美装甲车"},
+			[9]={"德轻歼击"},
+			[10]={"美中坦"},
+			[11]={"盟中坦"},
+			[12]={"美轻歼击"},
+			[13]={"苏轻歼击"},
+			[14]={"攻城炮"},
+			[15]={"突击炮"},
+			[16]={"榴弹炮"},
+			[17]={"高射炮"},
+			[18]={"德重坦"},
+			[19]={"美重坦"},
+			[20]={"德重歼击"},
+			[21]={"自行火炮"},
+			[22]={"美重歼击"},
+			--[23]={"德虎超坦"},
+		},
+		navy={
+			--待添加
+		},
+		air={
+			--待添加
+		},
+		armyIndex={},
+		navyIndex={},
+		airIndex={},
+	}
 }
-
-
+for k,v in ipairs(Setting.Army.army) do
+	Setting.Army.armyIndex[v[1]]=k
+end
+for k,v in ipairs(Setting.Army.air) do
+	Setting.Army.airIndex[v[1]]=k
+end
+for k,v in ipairs(Setting.Army.navy) do
+	Setting.Army.navyIndex[v[1]]=k
+end
 for k,v in ipairs(Setting.Building.City) do
 	Setting.Building.CityIndex[v[1]]=k
 end
@@ -129,13 +168,13 @@ ShowInfo={
 			sysLog("Running:"..info)
 			showHUD(HUD.runing,
 				info,_userDpi*0.03,"0xffffffff","0x4c000000"
-				,0,_fsw*0.5,0,_fsw*0.15,_fsh*0.02)
+				,0,_fsw*0.5,0,_fsw*0.3,_fsh*0.02)
 	end,
 	ResInfo=function(info)
 		sysLog("resource:"..info)
 		showHUD(HUD.resource,
 				info,_userDpi*0.03,"0xffffffff","0x4c000000",
-				0,_fsw*0.5,20,_fsw*0.3,_fsh*0.02)
+				0,_fsw*0.5,_fsh*0.02,_fsw*0.3,_fsh*0.02)
 	end
 }
 

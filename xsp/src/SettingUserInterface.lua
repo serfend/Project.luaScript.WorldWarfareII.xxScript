@@ -1,5 +1,6 @@
 UI = {
 	nowState=0,
+	MilitaryId="",
 }--初始化
 function UI:new (o)
     o = o or {}
@@ -11,6 +12,7 @@ end
 function UI:show(citylist,skillSetting)
 	local ui = require "bblibs.G_ui"
 	ui:new(_fsh,_fsw)
+	self:BuildAboutPage(ui)
 	self:BuildGeneralPage(ui)
 	self:BuildSkillPage(ui)
 	local p = ui:newPage("主城建设")
@@ -21,7 +23,7 @@ function UI:show(citylist,skillSetting)
 	self:BuildCityDevelopPriortyOption(p,"CityOther")
 	--p = ui:newPage("军团建设")
 	self:BuildArmyPage(ui)
-	self:BuildAboutPage(ui)
+	
 	self:BuildNoticePage(ui)
 
 	start,result= ui:show()
@@ -53,13 +55,26 @@ function UI:show(citylist,skillSetting)
 	UI:GetArmySetting(result)
 	UI:GetSetting(result,"CityMain")
 	UI:GetSetting(result,"CityOther")
-	setNumberConfig("Skill.UsedSkillQueueNum",result["Skill.UsedSkillQueueNum"])
-	printTable(ArmyList)
+
+	printTable(result)
 	return start,result
 end
 function UI:GetArmySetting(result)
 	for k,v in pairs(result) do
-		
+		if string.find(k,"Military") or 0>0 then
+			local armySetting=split(k,".")
+			if armySetting[2]=="Enable" then
+				Setting.Army.Enable[armySetting[3]]=v=="0" and true or false
+				sysLog("233:"..tostring(Setting.Army.Enable[armySetting[3]]))
+			elseif armySetting[2]=="EnableBuildAll" then
+				Setting.Army.army[Setting.Army.armyIndex[armySetting[3]]].EnableBuildAll=v=="0" and true or false
+			elseif armySetting[2]=="Build" or armySetting[2]=="Manufacture" then
+				Setting.Army.army[Setting.Army.armyIndex[armySetting[3]]][armySetting[2]]=tonumber(v)
+				setStringConfig("Military."..armySetting[2].."."..armySetting[3],tostring(v))
+			else
+				sysLog("没有见过的设置！..............................."..k)
+			end
+		end
 	end
 end
 function UI:GetSetting(result,id)
@@ -193,9 +208,12 @@ function UI:BuildSkillPage(ui)
 	p:newLine()
 	p:addCheckBoxGroup(4,1,"UnitSkillRunEnable","0@1@2",{"策略点","策略使用"}) 
 	p:newLine()
-	p:addLabel(5,1,"当资源不足时释放策略（未开启）")
+	p:addLabel(6,1,"当资源不足时释放策略（未开启）")
 	p:newLine()
 	p:addCheckBoxGroup(8,1,"Skill.CheckResource","",resSkills)
+	p:newLine()
+	p:addLabel(5,1,"当策略点达到时立即释放策略")
+	p:addComboBox(3,1,"Skill.ReleaseWhenFull","",{"达到上限","30","50","60","90","100","120","140","160","180"})
 	p:newLine()
 	p:addLabel(5,1,"当策略点不足时使用策略卡")
 	p:newLine()
@@ -216,29 +234,26 @@ function UI:BuildSkillPage(ui)
 	end
 end
 function UI:BuildArmyPage(ui)
-	p = ui:newPage("军事(未开放)")
-	p:addCheckBoxGroup_single(4,1,"Military.EnableBuild",false,"启用军事生产/组建")
-	p:newLine()
+	p = ui:newPage("军事")
 	self:BuildArmyList(p,"生产军备")	
-	p:newLine()
 	p:newLine()
 	self:BuildArmyList(p,"组建部队")	
 	p:newLine()
-	p:newLine()
-	p:addCheckBoxGroup_single(4,1,"Military.EnableExtract","1","启用拓展领土（未开启）")
+	p:addCheckBoxGroup_single(8,1,"Military.Enable.Extract","1","启用拓展领土（未开放）")
 end
 function UI:BuildArmyList(p,id)
+	self.MilitaryId=tostring(os.time())
 	nowArmyLineNum=0
-	p:addLabel(10,1,id)
+	p:addCheckBoxGroup_single(4,1,"Military.Enable."..id,false,"启用"..id)
 	p:newLine()
-	for i,item in ipairs(ArmyList) do
+	for i,item in ipairs(Setting.Army.army) do
 		if	i % 3==1 and i>1 then
 			p:newLine()
 		end
 		self:AddArmyList(p,id,item[1],true,0)
 	end
+	p:newLine()
 end
-local ArmyBuildNum={"0","50","100","200","400","800","1200","1600","2400","3600","5400","10000","15000","20000"}
 function UI:AddArmyList(p,id,Name,enableBuildAll,defaultNum)
 	if Name=="none" then
 		return false
@@ -251,13 +266,17 @@ function UI:AddArmyList(p,id,Name,enableBuildAll,defaultNum)
 	end
 	
 	p:addLabel(1.5,1,Name)
-	
+	local controlId=""
 	if id=="组建部队" then
-		p:addCheckBoxGroup_single(0.35,1,"Military.EnableBuildAll."..Name,buildEnable,"t")
-		p:addComboBox(1.1,1,"Military.Build."..Name,defaultNum,ArmyBuildNum)
+		controlId="Military.Build."..Name
+		p:addCheckBoxGroup_single(0.35,1,"Military.EnableBuildAll."..Name.."."..self.MilitaryId,buildEnable,"t")
 	else
-		p:addComboBox(1.1,1,"Military.Manufacture."..Name,defaultNum,ArmyBuildNum)
+		controlId="Military.Manufacture."..Name
 	end
+	p:addEdit(2,1,controlId.."."..self.MilitaryId,getStringConfig(controlId,"0"),getStringConfig(controlId,"0"),"number")
+	
+end
+function UI:AddExtractOption(p)
 	
 end
 function UI:BuildAboutPage(ui)

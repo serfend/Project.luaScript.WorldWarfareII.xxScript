@@ -56,6 +56,7 @@ function CityBuilding:Rebuild()
 	end
 end
 function CityBuilding:GetBuildingStatus(buildingX)
+	local result="资源不足"
 	keepScreen(true)
 	for i,statuInfo in ipairs(BuildingStatusList) do
 		x, y = findColor({buildingX-100, 546, buildingX+100, 582}, 
@@ -63,35 +64,68 @@ function CityBuilding:GetBuildingStatus(buildingX)
 			95, 0, 0, 0)
 		if x>-1 then
 			keepScreen(false)
-			return statuInfo[1]
+			result= statuInfo[1]
+			break
 		end
 	end
 	keepScreen(false)
-	return "资源不足"
+	if result=="可升级" then--判断是否是待重建
+			x, y = findColor({buildingX-100, 777, buildingX, 783}, 
+		"0|0|0x584837,3|0|0x060f15",
+		90, 0, 0, 0)
+		if x>-1 then
+			result="重建"
+		end
+	end
+	return result
+end
+function CityBuilding:GetBuildingLevelBeginPos(posx)
+	local findTime=0
+	local posX=posx+80
+	while posX<posx+150 do
+		posX=posX+1
+		r,g,b=getColorRGB(posX,765)
+		if r+g+b>=220*3 then--发现白色区域
+			findTime=findTime+1
+			posX=posX+5
+			if findTime==4 then
+				break
+			end
+		end
+	end
+	if posX>=posx+150 then
+		ShowInfo.RunningInfo("获取建筑等级失败")
+	end
+	return posX+1
 end
 function CityBuilding:GetBuildingLevel(buildingX)
-	local x, y = findColor({buildingX+100, 730, buildingX+180, 770}, 
-			"0|0|0xffffff",
-			95, 0, 0, 0)--找到字母L以确定等级起始
+	keepScreen(true)
+	local result=0
+	local x=self:GetBuildingLevelBeginPos(buildingX)
 	if x>0 then
-		local x1,y1,x2,y2=x+37,738,x+67,770
-		--showRect(x1,y1,x2,y2,5000)
+		local x1,y1,x2,y2=x,738,x+30,770
+		showRect(x1,y1,x2,y2,2000)
 		local code,cityLevelRaw=ocr:GetNumBold(x1,y1,x2,y2)
 		if code~=0 then
 			sysLog("等级识别失败"..code)
+			result=-1
 		else
-			cityLevel=tonumber(cityLevelRaw)
-			if cityLevel==nil then
+			result=tonumber(cityLevelRaw)
+			if result==nil then
 				sysLog("等级识别错误"..code)
-				cityLevel=0
+				result=0
 			end
-			sysLog("x:"..x..",level:"..cityLevel)
-			return tonumber(cityLevel)
+			if result>40 then
+				result=0
+			end
+			sysLog("x:"..x..",level:"..result..",raw:"..cityLevelRaw)
 		end
 	else
 		sysLog("no Level Found")
-		return 0
+		result= 0
 	end
+	keepScreen(false)
+	return result
 end
 function CityBuilding:CheckRepair()
 	x, y =Form:GetBuildingButton("修理")

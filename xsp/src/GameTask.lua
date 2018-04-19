@@ -12,33 +12,47 @@ function GameTask:new (o)
     return o
 end
 function GameTask:MainTaskProcess()
-	local lastMaxX,lastMaxY=-1,-1
-	local lastMinX,lastMinY=9999,9999
+	
+	local lastMaxX,lastMaxY=0,0
+	local lastMinX,lastMinY=1920,1080
+	local detectX1,detectX2,detectY1,detectY2=0,1920,0,1080
 	local beginTime=os.time()
 	local directionTimes={0,0,0,0}
+	mSleep(800)
 	while os.time()-beginTime<4 do
-		local nowX,nowY,direction=GameTask:GetNowTipPos()
+		mSleep(100)
+		local nowX,nowY,direction=self:GetNowTipPos(detectX1,detectY1,detectX2,detectY2)
 		directionTimes[direction]=directionTimes[direction]+1
-		--sysLog("up:"..nowX..","..nowY)
+		
 		if nowY>lastMaxY and nowY>-1 then
-			--sysLog("updateMax:"..nowX..","..nowY)
-			lastMaxX=nowX
 			lastMaxY=nowY
+			detectY2=lastMaxY+200
+		end
+		if nowX>lastMaxX and nowX>-1 then
+			lastMaxX=nowX
+			detectX2=lastMaxX+200
 		end
 		if nowY<lastMinY and nowY>-1 then
-			--sysLog("updateMin:"..nowX..","..nowY)
-			lastMinX=nowX
 			lastMinY=nowY
+			detectY1=lastMinY-200
+		end
+		if nowX<lastMinX and nowX>-1 then
+			lastMinX=nowX
+			detectX1=lastMinX-200
 		end
 	end
 	local lastX,lastY=0,0
-	if directionTimes[1]>directionTimes[2] then
-		lastX,lastY=lastMaxX,lastMaxY
-	else
-		lastX,lastY=lastMinX,lastMinY
+	sysLog("dirTime:"..directionTimes[1]..","..directionTimes[2]..","..directionTimes[3])
+	if directionTimes[1]<directionTimes[2] then--左上出现次数多于左下,则应取Min,Min
+		lastX,lastY= lastMinX,lastMinY
+	elseif directionTimes[1]>directionTimes[3] then
+		lastX,lastY= lastMinX,lastMaxY--左下出现次数多于右下,则应取Min,Max
+	else--否则是右下Max,Max
+		lastX,lastY= lastMaxX,lastMaxY
 	end
-	ShowInfo.RunningInfo(lastX..","..lastY)
-	if lastX>-1 and lastX<9999 then
+	if lastX>0 and lastX<1920 then
+		showRect(lastX-15,lastY-15,lastX+15,lastY+15,500)
+		ShowInfo.RunningInfo("up:"..lastX..","..lastY.."at("..detectX1..","..detectY1.."),("..detectX2..","..detectY2..")")
 		tap(lastX,lastY)
 		self:MainTaskProcess()
 	else
@@ -81,18 +95,23 @@ function GameTask:BuidlingIsOnProcess()
 end
 local CheckMainTaskTimes=0--第5次检查时强制检查任务完成情况
 function GameTask:MainTask()
-	if self.MainThreadTaskRefresh==false and CheckMainTaskTimes<5 then 
-		ShowInfo.RunningInfo("上一任务正在完成中")
-		CheckMainTaskTimes=CheckMainTaskTimes+1
-		return false
-	else
-		CheckMainTaskTimes=0
+	if not self.MainThreadTaskRefresh then
+		if CheckMainTaskTimes<5 then 
+			ShowInfo.RunningInfo("上一任务正在完成中")
+			CheckMainTaskTimes=CheckMainTaskTimes+1
+			return false
+		else
+			CheckMainTaskTimes=0
+			if Setting.Task.EnableAutoProcessTaskDuplicate then
+				return false
+			end
+		end
 	end
 	self:Enter(true)--强制进入
 	keepScreen(true)
-	local splitCharPos=self:GetMainTaskSplitCharPos()
-	showRect(splitCharPos,213,1350,247,1000)
-	local ocrCode,result=ocr:GetStringInNum(splitCharPos,213,splitCharPos+1350,247,"0xffffff-0xbfbfbf")
+	local splitCharPos,splitCharPosEnd=self:GetMainTaskSplitCharPos()
+	showRect(splitCharPos,213,splitCharPosEnd,247,1000)
+	local ocrCode,result=ocr:GetNum(splitCharPos,213,splitCharPosEnd,247,"0xffffff-0xbfbfbf")
 	keepScreen(false)
 	self.MainTaskInfo=""
 	local tmp=split(result,"/")
@@ -103,6 +122,9 @@ function GameTask:MainTask()
 	end
 	if self.MainTaskNowAttain==0 then 
 		self.MainTaskNowAttain=-1
+	end
+	if self.MainTaskRequire<20 then
+		self.MainTaskRequire=-1
 	end
 	ShowInfo.ResInfo("任务需求:"..self.MainTaskRequire..",当前已完成:"..self.MainTaskNowAttain.." raw:"..result)
 	Form:Exit()
@@ -115,36 +137,48 @@ function GameTask:MainTask()
 end
 function GameTask:GetMainTaskSplitCharPos()
 	local x=1350
-	local beginX,endX=0,x
+	local beginX,endX=0
 	while x>0 do
 		x=x-1
-		local r,g,b=getColorRGB(x,225)
+		local r,g,b=getColorRGB(x,225)--中间位置
 		local aberration=GetAberration(r,g,b,255,255,255)
-		if aberration<300 then
+		if aberration<300 then---检查与纯白的差距
 			local chrRect=GetRect(x,225,x-100,x+100,210,255,r,g,b,200)
-			if beginX==0 then
-				beginX=chrRect.x1
-			else
-				if beginX-chrRect.x2>50 then
-					beginX=chrRect.x2+5
+			showRect(chrRect.x1,chrRect.y1,chrRect.x2,chrRect.y2,500)
+			if beginX~=0 then
+				if beginX-chrRect.x1>24 then--当边距超过50时(需要检查分辨率)
+					beginX=chrRect.x2
 					break
 				end
+			else
+				endX=chrRect.x2+10
 			end
+			beginX=chrRect.x1
 			x=chrRect.x1-3
 		end
 	end
-	return beginX
+	return beginX+5,endX
 end
-function GameTask:GetNowTipPos()
+function GameTask:GetNowTipPos(x,y,w,h)
 	local x,y=0,0
 	local tryTime=0
 	local TipDirectionTime={0,0,0,0}
 	while tryTime<TipDirectionUsed do
-		--sysLog("direction"..TipDirection)
+		local searchDirectionY=1 searchDirectionX=0
+		if TipDirection==2 then-- 为左上手指时从上向下扫描
+			searchDirectionY=0
+		else
+			searchDirectionY=1
+		end
+		if TipDirection==3 then--为右下手指时从右向左扫描
+			searchDirectionX=1
+		else
+			searchDirectionX=0
+		end
 		TipDirectionTime[TipDirection]=TipDirectionTime[TipDirection]+1
-		x,y = findColor({0, 0, 1920, 1080}, 
+		x,y = findColor({x, y, w, h}, 
 			TipDirectionData[TipDirection],
-			95, 0, (TipDirection==1 and 1 or 0), 0)-- 为左下手指时从下向上扫描
+			95, 0, searchDirectionX, searchDirectionY)
 		if x<0 then
 			tryTime=tryTime+1
 			TipDirection=math.mod(TipDirection,TipDirectionUsed)+1
@@ -152,11 +186,16 @@ function GameTask:GetNowTipPos()
 			break
 		end
 	end
+	
 	local direction=0
 	if TipDirectionTime[1]>TipDirectionTime[2] then
 		direction=1
 	else
-		direction=2
+		if TipDirectionTime[2]>TipDirectionTime[3] then
+			direction=2
+		else
+			direction=3
+		end
 	end
 	return x,y,direction
 end

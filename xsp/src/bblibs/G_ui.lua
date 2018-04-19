@@ -1,3 +1,4 @@
+
 --全能打印函数
 local function pr()
 	local function TableToString(tab)  
@@ -139,6 +140,7 @@ function ui:new(width,height,okname,cancelname,config)
 	self["width"] 		= tonumber(width)*0.95 or w_*0.95
 	self["height"] 		= tonumber(height)*0.95 or h_*0.95
 	self["config"] 		= config or "Setting6Config.dat"
+	--resetUIConfig("SettingConfig.dat")
   if ui_ref then self["bg"] = "ref_line.png" end
   ref_width = 0.1*self["width"]
   box_width = self["width"] 
@@ -249,7 +251,7 @@ function ui:addCheckBoxGroup(index_w,index_h,id,def_value,selectList)--添加选
 		["type"] 	= "CheckBoxGroup",
 		["id"] 		= id,
 		["list"] 	= table.concat(selectList,","),
-		["select"] 	= def_value,
+		["select"] 	= def_value or defaultValue,
 		["width"]	= width,
     ["size"]    = size,
     rect = rect
@@ -268,7 +270,7 @@ function ui:addCheckBoxGroup_single(index_w,index_h,id,def_value,checkValue)--�
 		["type"] 	= "CheckBoxGroup",
 		["id"] 		= id,
 		["list"] 	= tab[1],
-		["select"] 	= def_value,
+		["select"] 	= def_value ,
 		["width"]	= width,
     ["size"]    = size,
     rect = rect
@@ -285,7 +287,7 @@ function ui:addLabel(index_w,index_h,text,size,align,color,extra)
 	local rect = self:rect_free(w,h)
 	local arr = {
 		["type"]    = "Label",
-		["text"]    = text,
+		["text"]    = text ,
 		["size"]    = size,
 		["align"]   = align or "left" ,
 		["color"]   = color or "0,32,96",
@@ -303,7 +305,7 @@ function ui:addComboBox(index_w,index_h,id,def_value,selectList)--添加选择�
 		["type"] 	= "ComboBox",
 		["id"] 		= id,
 		["list"] 	= table.concat(selectList,","),
-		["select"] 	= def_value,
+		["select"] 	= def_value ,
 		["width"]	= width,
     ["size"]    = math.floor(0.33*ref_size),
     rect = rect
@@ -319,8 +321,8 @@ function ui:addEdit(index_w,index_h,id,def_value,prompt,kbtype,size,align,color)
   local arr = {
       ["type"] = "Edit",
       ["id"] = id,
-      ["prompt"] = prompt or "",
-      ["text"] = def_value or "" ,
+      ["prompt"] = prompt or defaultValue,
+      ["text"] = def_value  ,
       ["size"] =size,
       ["align"] = align or "left",
       ["color"] = color or "0,0,255",
@@ -354,4 +356,5 @@ function ui:show()
 	end
 	return ret,retTable
 end
+
 return ui

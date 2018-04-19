@@ -6,9 +6,9 @@ Skill = {
 	nowSkillPoint=0,maxSkillPoint=0,
 	
 	MaxAssertSkillPoint=100,NowAssertSkillPoint=0,
+	
+	ReleaseWhenFull="",
 }--初始化
- 	posX=1500
-	beginY,endY=500,200
 function Skill:new (o)
     o = o or {}
     setmetatable(o, self)
@@ -16,6 +16,7 @@ function Skill:new (o)
     return o
 end
 function Skill:setUseSkill(userSetting)
+	self.ReleaseWhenFull=userSetting["Skill.ReleaseWhenFull"]
 	local skillQueueNum=tonumber(userSetting["Skill.UsedSkillQueueNum"])
 	self.useSkills={}
 	self.NowSkillNum=0
@@ -33,13 +34,22 @@ function Skill:setUseSkill(userSetting)
 		Setting.Skill.SupplyCard["card"..key]=item
 	end
 end
+local needUseNow=false
 function Skill:Run()
 	sleepWithCheckLoading(500)
 	Skill:CheckIfAnySkillBeenSelect()
 	if self:NeedRefresh() then
 		if self:Enter() then
+			if self.ReleaseWhenFull=="达到上限" then
+				needUseNow=self.nowSkillPoint>=self.maxSkillPoint
+			else
+				needUseNow=self.nowSkillPoint>=tonumber(self.ReleaseWhenFull)
+			end
 			if self.UserEnableAutoCollect then 
-				local attainStatus,SkillPointX,SkillPointY=self:AttainNewSkillPoint()			
+				local attainStatus,SkillPointX,SkillPointY=self:AttainNewSkillPoint()	
+				if attainStatus~=2 then--只有在本次获取后超出才会强制使用
+					needUseNow=false
+				end
 			else
 				ShowInfo.RunningInfo("技能点获取被禁用")
 			end
@@ -49,8 +59,7 @@ function Skill:Run()
 				ShowInfo.RunningInfo("技能使用被禁用")
 			end
 			if attainStatus==2 then
-				self:Enter()
-				tap(SkillPointX,SkillPointY)
+				self:AttainNewSkillPoint()	
 			end
 			self:Exit()
 		else
@@ -163,6 +172,9 @@ function Skill:RefreshSkillPointValue()
 		local tmp=split(result,"/")
 		self.MaxAssertSkillPoint=tonumber(tmp[2])
 		self.NowAssertSkillPoint=tonumber(tmp[1])
+		if self.NowAssertSkillPoint>200 then
+			self.NowAssertSkillPoint=self.NowAssertSkillPoint
+		end
 		sysLog("当前技能点:"..self.NowAssertSkillPoint.."/"..self.MaxAssertSkillPoint)
 	else
 		ShowInfo.RunningInfo("识别技能数值错误")
@@ -189,21 +201,29 @@ end
 
 function Skill:UseSkills()
 	sleepWithCheckLoading(300)
+	ShowInfo.RunningInfo("技能释放开始")
 	if self.NowSkillNum==0 then
-		
+		if needUseNow then
+			ShowInfo.RunningInfo("技能点达到上限,强制使用")
+			for k,item in pairs(skillList) do
+				if self:UseSkill(k) then
+					return true
+				end
+			end
+		end
 	else
-		local successUsed=true
 		local lastTimeQueueIndex=self.NowUseSkillIndex
-		while successUsed do
+		while true do
 			if not self:Enter() then
 				return false
 			end
+			
 			self.NowUseSkillIndex=self.NowUseSkillIndex+1
 			if self.NowUseSkillIndex>self.NowSkillNum then
 				self.NowUseSkillIndex=1
 			end
 			ShowInfo.RunningInfo("技能队列"..self.NowUseSkillIndex)
-			successUsed=self:UseSkill(self.useSkills[self.NowUseSkillIndex])
+			self:UseSkill(self.useSkills[self.NowUseSkillIndex])
 			sysLog(self.NowUseSkillIndex.."/"..lastTimeQueueIndex)
 			if self.NowUseSkillIndex==lastTimeQueueIndex then
 				
@@ -224,7 +244,7 @@ function Skill:UseSkill(index)
 		findTime=findTime+1
 		sleepWithCheckLoading(500)
 		ShowInfo.RunningInfo("使用技能"..index)
-		local x, y = findColor({posX, endY, 1700, beginY}, 
+		local x, y = findColor({1500, 150, 1700, 960}, 
 		skillList[index],
 		90, 0, 0, 0)
 		if x > -1 then
@@ -232,7 +252,7 @@ function Skill:UseSkill(index)
 			while self:CheckPointNotEnough(y) do
 				if not self:UseSkillPointSupplyCard() then
 					ShowInfo.RunningInfo("技能"..index.."策略值不足")
-					return true--虽然不可用，但还是当做成功使用
+					return false
 				else
 					
 					break
@@ -242,7 +262,7 @@ function Skill:UseSkill(index)
 			sleepWithCheckLoading(200)
 			if not self.SkillCanRelease() then 
 				ShowInfo.RunningInfo("技能"..index.."不可用")
-				return true--虽然不可用，但还是当做成功使用
+				return false
 			end
 			Building:SelectMainCity()
 			tap(960,540)--屏幕中心是主城
@@ -250,12 +270,13 @@ function Skill:UseSkill(index)
 			tap(1213,1000)--使用技能【确定】
 			ShowInfo.RunningInfo("使用技能"..index.."完成")
 			sleepWithCheckLoading(500)
+
 		else
-			self:NextSkillPage()
-			if self:AtButtomSkill() then 
+			 
+			if not self:NextSkillPage() then 
 				if beenTwiceAtButtom then
 					ShowInfo.RunningInfo("未找到技能"..index)
-					return true--虽然不可用，但还是当做成功使用
+					return false
 				else
 					beenTwiceAtButtom=true
 					self:RollToBegin()
@@ -326,10 +347,10 @@ end
 function Skill:RollToBegin()
 	ShowInfo.RunningInfo("初始化技能")
 	local tryTime=0
-	while not Skill:AtTopSkill() do
-		Skill:LastSkillPage()
+	while Skill:LastSkillPage() do
+		mSleep(200)
 		tryTime=tryTime+1
-		if tryTime>=5 then
+		if tryTime>10 then
 			break
 		end
 	end
@@ -345,7 +366,7 @@ function Skill:SkillPageIsOn()
 	end
 end
 function Skill:AtTopSkill()
-		x, y = findColor({1850, 150, 1860, 200}, 
+		x, y = findColor({1860, 150, 1861, 200}, 
 	"0|0|0x44413c",
 	95, 0, 0, 0)
 	if x > -1 then
@@ -356,7 +377,7 @@ function Skill:AtTopSkill()
 	end
 end
 function Skill:AtButtomSkill()
-		x, y = findColor({1850, 800, 1860, 969}, 
+		x, y = findColor({1860, 800, 1861, 969}, 
 	"0|0|0x44413c",
 	95, 0, 0, 0)
 	if x > -1 then
@@ -367,9 +388,10 @@ function Skill:AtButtomSkill()
 	end
 end
 function Skill:LastSkillPage()
-	mSleep(200)
-	swip(posX,endY,posX,beginY)
+	swip(1500,200,1500,900,5)
+	return not Skill:AtTopSkill()
 end
 function Skill:NextSkillPage()
-	swip(posX,beginY,posX, endY)
+	swip(1500,900,1500, 200,5)
+	return not self:AtButtomSkill()
 end

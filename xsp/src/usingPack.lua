@@ -1,5 +1,6 @@
 
 require "Init"
+require "Authorization"
 require "GameTask"
 require "Skill"
 require "Building.Building"
@@ -14,3 +15,4 @@ require "War.Troop"
 require "War.TroopList"
 require "War.Conscript"
 require "OCR"
+
