@@ -1,4 +1,6 @@
-local pos = {}
+pos = {
+	x=0,y=0,color=0x000000
+}
 
 pos.degree = function(color1, color2)
   local fl = math.floor
@@ -10,15 +12,48 @@ end
 
 --newpos对象
 function pos:new(x, y, color)
-  local options = {}
-	options.x = x or 0
-	options.y = y or 0
-	options.color = color or 0x000000
-  setmetatable(options, self)
-	self.__index = self
-  return options
+	self.x = x or 0
+	self.y = y or 0
+	self.color = color or 0x000000
+    o = o or {}
+    setmetatable(o, self)
+    self.__index = self
+    return o
 end
-
+function pos:GetImageDescription(pixInterval,size)
+	size=size-1--大小为n^2
+	self.y,self.x=catchTouchPoint()
+	mSleep(500)
+	keepScreen(true)--截图
+	self.y=1080-self.y
+	local tmpX,tmpY=dialogInput("修改坐标("..self.x..","..self.y..")",self.x.."#"..self.y,"确定")
+	self.x=tonumber((tmpX=="" and self.x or tmpX))
+	self.y=tonumber((tmpY or  self.y))
+	--showRect(self.x-10,self.y-10,self.x+10,self.y+10,1000)
+	local result="" firstInfo=""
+	for col=-size,size do
+		for row=-size,size do
+			
+			offsetX=pixInterval*col
+			offsetY=pixInterval*row
+			local posX,posY=self.x+offsetX,self.y+offsetY
+			--showRect(posX-15,posY-15,posX+15,posY+15,500)
+			
+			local color=getColor(posX,posY)--获取样本点
+			local info=offsetX.."|"..offsetY.."|"..string.format("0x%06x",color)..","
+			sysLog(info)
+			if col==0 and row==0 then
+				firstInfo=info
+			else
+				result=result..info
+			end
+		end
+	end
+	result=firstInfo .. result
+	keepScreen(false)
+	writePasteboard(result)
+	return result
+end
 --距离
 function pos:distanceBetween(t)
 	return  math.sqrt(math.abs(self.x - t.x) * math.abs(self.x - t.x) + math.abs(self.y - t.y) * math.abs(self.y - t.y))

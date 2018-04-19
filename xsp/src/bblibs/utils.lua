@@ -5,6 +5,19 @@
 function sysLogFmt(fmt, ...)
   sysLog(string.format(fmt, ...))
 end
+function GetUserImages(interval,size)
+	require "bblibs.pos"
+
+	while(true) do 
+		catchTouchPoint()
+		local point=pos:new()
+		local f=point:GetImageDescription(interval,size)--提取按下点周围的信息
+		local x,y=findColor({0,0,1920,1080},f,95,0,0,0)
+		for i=1,5 do
+			showRect(x-10,y-10,x+10,y+10,500)
+		end
+	end
+end
 function restartApp(delay)
 	delay=delay or 30000
 	local lastApp=frontAppName()
@@ -164,9 +177,9 @@ function tap(x, y,delay)
   y = y + math.random(-1,1)
   touchDown(index,x, y)
   delay=delay or 0
-  mSleep(math.random(delay+70,delay+80))                --某些特殊情况需要增大延迟才能模拟点击效果
+  mSleep(math.random(delay+20,delay+30))                --某些特殊情况需要增大延迟才能模拟点击效果
   touchUp(index, x, y)
-  mSleep(50)
+  mSleep(30)
 end
 function distance(x1,y1,x2,y2)
 	return math.sqrt((x2-x1)^2+(y2-y2)^2)
