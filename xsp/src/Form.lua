@@ -7,17 +7,20 @@ function Form:new (o)
     self.__index = self
     return o
 end
+function Form:DetectNowFocus()
+	
+end
 function Form:GetBuildingButton(buttonName)
 	local x,y= findColor({771, 823, 1839, 1038}, 
 		BuildingButtonList[buttonName],
-		93, 0, 0, 0)
+		92, 0, 0, 0)
 	if x<0 then
 		ShowInfo.RunningInfo("寻找"..buttonName.."按钮失败")
 	end
-	
 	return x,y
 end
 function Form:Exit(exitAll)
+	keepScreen(false)
 	exitAll=exitAll or false
 	local success=true
 	while success  do
@@ -34,9 +37,12 @@ end
 function Form:Build()
 	return Form:DoAction(Form.findBuild,"提交(重建)")
 end
-function Form:Manufacture(produceNum)
+function Form:Manufacture(produceNum,exceptSoilder)
+	exceptSoilder=exceptSoilder or false
 	if produceNum~=nil then
-		Form:EditProduceNum(produceNum)
+		if not Form:EditProduceNum(produceNum,exceptSoilder) then
+			return false
+		end
 	end
 	return Form:DoAction(Form.findBuild,"提交(生产/组建)")
 end
@@ -52,18 +58,29 @@ function Form:GetNowManufactureNum()
 	end
 	return tonumber(result)
 end
-function Form:EditProduceNum(num)
+function Form:EditProduceNum(num,exceptSoilder)
 		local x, y = findColor({1240, 400, 1300, 600}, 
 	"0|0|0xeaffff,-12|7|0xe0ffff",
 	95, 0, 0, 0)--编辑按钮
 	if x>-1 then
+	
+		if y>560 and exceptSoilder then--组建部队
+			if  not Conscript:HaveLastConscript()  then
+				ShowInfo.RunningInfo("生产已被禁止,需预留军备")
+				Conscript:CheckConscriptStatus()
+				return false
+			end
+		end
 		ShowInfo.RunningInfo("修改数值"..num)
 		tap(x,y)--进入编辑
 		mSleep(500)
 		inputText(tostring(num))
+		mSleep(200)
 		tap(x,y)--退出编辑
 		mSleep(500)
+		return true
 	end
+	return false
 end
 function Form:BuildAtMap()
 	if Form:CheckBuildNewRequire() then

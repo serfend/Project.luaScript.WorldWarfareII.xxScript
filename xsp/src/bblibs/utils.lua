@@ -1,9 +1,22 @@
 -- 作者boyliang
 -- 时间: 2015-11-26
-
+require "bblibs.StringBuilder"
 -- 格式化输出
 function sysLogFmt(fmt, ...)
   sysLog(string.format(fmt, ...))
+end
+function GetMaxIndex(...)
+	local items={...}
+	if #items==0 then return 0 end
+	local maxValue=items[1]
+	local maxIndex=1
+	for i=2,#items do
+		if items[i]>maxValue then
+			maxValue=items[i]
+			maxIndex=i
+		end
+	end
+	return maxIndex
 end
 function GetUserImages(interval,size)
 	require "bblibs.pos"
@@ -12,9 +25,15 @@ function GetUserImages(interval,size)
 		catchTouchPoint()
 		local point=pos:new()
 		local f=point:GetImageDescription(interval,size)--提取按下点周围的信息
-		local x,y=findColor({0,0,1920,1080},f,95,0,0,0)
-		for i=1,5 do
-			showRect(x-10,y-10,x+10,y+10,500)
+		for times=1,5 do
+			local points=findColors({0,0,1920,1080},f,90,0,0,0)
+			points=exceptPosTableByNewtonDistance(points,50)
+			for i=1,#points do
+				for j=1,5 do
+					showRect(points[i].x-10,points[i].y-10,points[i].x+10,points[i].y+10,500,nil,tostring(i))
+				end
+			end
+			mSleep(1000)
 		end
 	end
 end
@@ -31,6 +50,7 @@ function restartApp(delay)
 	end
 end
 function showRect(x1,y1,x2,y2,timeDelay,color,info)
+	--sysLog("ShowRect"..x1..","..y1.."."..x2..","..y2)
 	color=color or "0x4c00ff00"
 	info=info or ""
 	timeDelay=timeDelay or 1000
@@ -87,6 +107,7 @@ end
 function GetAberration(r,g,b,r2,g2,b2)
 	return math.abs(r-r2)+math.abs(g-g2)+math.abs(b-b2)
 end
+
 function sleepWithCheckLoading(interval)
 	local canGoOn=false
 	local times=0
@@ -173,8 +194,6 @@ function tap(x, y,delay)
 	local x, y = x, y
   math.randomseed(tostring(os.time()):reverse():sub(1, 6))  --设置随机数种子
   local index = math.random(1,5)
-  x = x + math.random(-1,1) 
-  y = y + math.random(-1,1)
   touchDown(index,x, y)
   delay=delay or 0
   mSleep(math.random(delay+20,delay+30))                --某些特殊情况需要增大延迟才能模拟点击效果
@@ -186,14 +205,14 @@ function distance(x1,y1,x2,y2)
 end
 -- 模拟滑动操作，从点(x1, y1)划到到(x2, y2)
 function swip(x1,y1,x2,y2,step)
+	sysLog("swip"..x1..","..y1.."-"..x2..","..y2)
 	step=step or 10
 	index = math.random(1,5)
     touchDown(index, x1, y1)
     for i=1,step do
 		touchMove(index,(x2-x1)*i/step+x1,(y2-y1)*i/step+y1)
+		mSleep(30)
 	end
-
-    touchMove(index, x2, y2)
     mSleep(30)
     touchUp(index, x2, y2)
 end

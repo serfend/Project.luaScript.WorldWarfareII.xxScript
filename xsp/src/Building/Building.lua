@@ -16,7 +16,6 @@ function Building:Run()
 	if Setting.Building.CityOtherSetting.EnableTransportRescouseToMainCity then
 		sysLog("2333")
 	end
-	gameTask:NeedRefresh()--判断是否需要取野地事件
 	if Setting.Building.CityMainSetting.EnableAutoDevelop==false and Setting.Building.CityOtherSetting.EnableAutoDevelop==false then
 		ShowInfo.RunningInfo("城市建设被禁用")
 		return false
@@ -25,8 +24,9 @@ function Building:Run()
 		ShowInfo.RunningInfo("进入城市界面失败")
 		return false
 	end
-	Building:BuildingBegin()
+	local success=Building:BuildingBegin()
 	self:Exit()
+	return success
 end
 function Building:AnyExtractCity()
 		return  findColor({10, 70, 100, 1072}, 
@@ -78,6 +78,7 @@ function Building:BuildingBegin()
 		
 	end
 	ShowInfo.RunningInfo("成功处理"..handleCityNum.."座城")
+	return true
 end
 function Building:SelectNowFocus()
 	return Building:FindNowFocus()
@@ -163,8 +164,8 @@ function  Building:Enter()
 	if x>-1 then
 		tap(x,y)
 		mSleep(200)
-		x,y=self:find()
-		if x>-1 then
+		x,y=Form:findExit()
+		if x==-1 then
 			return false
 		else
 			return true

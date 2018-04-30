@@ -10,9 +10,14 @@ function Command:new (o)
 end
 
 function Command:SelectTroop(index)
+	
+end
+function Command:SortTroops()
 
 end
-
+function Command:ReturnToNormalScale()
+	tap(415,277)--按下提示按钮以返回
+end
 --	if TroopList:Enter() then
 --		if TroopList:FoldTroop() then
 --			TroopList:ExtractTroop(0)

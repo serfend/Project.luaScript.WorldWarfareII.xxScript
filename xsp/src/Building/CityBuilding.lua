@@ -82,18 +82,22 @@ end
 function CityBuilding:GetBuildingLevelBeginPos(posx)
 	local findTime=0
 	local posX=posx+80
-	while posX<posx+150 do
+	while posX<posx+180 do
 		posX=posX+1
 		r,g,b=getColorRGB(posX,765)
-		if r+g+b>=220*3 then--发现白色区域
+		r2,g2,b2=getColorRGB(posX,763)
+		--showRect(posX-5,738,posX+5,770,300)
+		if r+g+b>=600 or r2+g2+b2>600 then--发现白色区域
 			findTime=findTime+1
+			--sysLog("233"..findTime)
 			posX=posX+5
+			
 			if findTime==4 then
 				break
 			end
 		end
 	end
-	if posX>=posx+150 then
+	if posX>=posx+180 then
 		ShowInfo.RunningInfo("获取建筑等级失败")
 	end
 	return posX+1
@@ -104,7 +108,7 @@ function CityBuilding:GetBuildingLevel(buildingX)
 	local x=self:GetBuildingLevelBeginPos(buildingX)
 	if x>0 then
 		local x1,y1,x2,y2=x,738,x+30,770
-		showRect(x1,y1,x2,y2,2000)
+		--showRect(x1,y1,x2,y2,2000)
 		local code,cityLevelRaw=ocr:GetNumBold(x1,y1,x2,y2)
 		if code~=0 then
 			sysLog("等级识别失败"..code)

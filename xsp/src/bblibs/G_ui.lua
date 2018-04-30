@@ -163,10 +163,10 @@ end
 function ui:init()
   file.write(self["config"],"","w+") 
 end
-function ui:newPage(text)--添加标签
+function ui:newPage(text,pageId)--添加标签
 	local tab = {
-		--["id"]		= "PageID",
-    ["style"] = "custom",
+		--["id"]		=pageId or "PageID",
+		["style"] = "custom",
 		["type"] 	= "Page",
 		["text"] 	= text ,
 		views = {}
@@ -290,7 +290,7 @@ function ui:addLabel(index_w,index_h,text,size,align,color,extra)
 		["text"]    = text ,
 		["size"]    = size,
 		["align"]   = align or "left" ,
-		["color"]   = color or "0,32,96",
+		["color"]   = color or "50,50,128",
     ["extra"]   = extra,
     rect = rect
 	}

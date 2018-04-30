@@ -12,7 +12,8 @@ function OCR:new (o)
 	self.ocrNum,self.msg=createOCR({
 		type = "tesseract",
 		path = "res/", -- 自定义字库暂时只能放在脚本res/目录下
-		lang = "num" -- 使用生成的num.traineddata文件
+		lang = "num", -- 使用生成的num.traineddata文件
+		
 	})
 	if self.ocrNum==nil then
 		self:showError()

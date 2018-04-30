@@ -3,11 +3,10 @@ Skill = {
 	nowState=0,UserEnableAutoCollect=false,
 	useSkills={},NowSkillNum=0,UserEnableUseSkill=false,
 	NowUseSkillIndex=1,
-	nowSkillPoint=0,maxSkillPoint=0,
-	
+
 	MaxAssertSkillPoint=100,NowAssertSkillPoint=0,
 	
-	ReleaseWhenFull="",
+	ReleaseWhenFull="",SkillReleaseWhenFull="",
 }--初始化
 function Skill:new (o)
     o = o or {}
@@ -17,7 +16,9 @@ function Skill:new (o)
 end
 function Skill:setUseSkill(userSetting)
 	self.ReleaseWhenFull=userSetting["Skill.ReleaseWhenFull"]
+	self.SkillReleaseWhenFull=userSetting["Skill.SkillReleaseWhenFull"]
 	local skillQueueNum=tonumber(userSetting["Skill.UsedSkillQueueNum"])
+	setNumberConfig("Skill.UsedSkillQueueNum",skillQueueNum)
 	self.useSkills={}
 	self.NowSkillNum=0
 	self.NowUseSkillIndex=1
@@ -41,19 +42,16 @@ function Skill:Run()
 	if self:NeedRefresh() then
 		if self:Enter() then
 			if self.ReleaseWhenFull=="达到上限" then
-				needUseNow=self.nowSkillPoint>=self.maxSkillPoint
+				needUseNow=self.NowAssertSkillPoint>=self.MaxAssertSkillPoint
 			else
-				needUseNow=self.nowSkillPoint>=tonumber(self.ReleaseWhenFull)
+				needUseNow=(self.NowAssertSkillPoint>=tonumber(self.ReleaseWhenFull))
 			end
 			if self.UserEnableAutoCollect then 
 				local attainStatus,SkillPointX,SkillPointY=self:AttainNewSkillPoint()	
-				if attainStatus~=2 then--只有在本次获取后超出才会强制使用
-					needUseNow=false
-				end
 			else
 				ShowInfo.RunningInfo("技能点获取被禁用")
 			end
-			if self.UserEnableUseSkill then
+			if self.UserEnableUseSkill or needUseNow then
 				self:UseSkills()
 			else
 				ShowInfo.RunningInfo("技能使用被禁用")
@@ -73,6 +71,7 @@ function Skill:Run()
 	else
 		ShowInfo.RunningInfo("技能无需检查")
 	end
+	return true
 end
 function Skill:FindSkillPoint1()
 	x, y = findColor({1774, 802, 1914, 930}, 
@@ -175,9 +174,9 @@ function Skill:RefreshSkillPointValue()
 		if self.NowAssertSkillPoint>200 then
 			self.NowAssertSkillPoint=self.NowAssertSkillPoint
 		end
-		sysLog("当前技能点:"..self.NowAssertSkillPoint.."/"..self.MaxAssertSkillPoint)
+		ShowInfo.ResInfo("当前技能点:"..self.NowAssertSkillPoint.."/"..self.MaxAssertSkillPoint)
 	else
-		ShowInfo.RunningInfo("识别技能数值错误")
+		ShowInfo.ResInfo("识别技能数值错误")
 		self.MaxAssertSkillPoint=-1
 		self.NowAssertSkillPoint=-1
 	end
@@ -204,34 +203,47 @@ function Skill:UseSkills()
 	ShowInfo.RunningInfo("技能释放开始")
 	if self.NowSkillNum==0 then
 		if needUseNow then
-			ShowInfo.RunningInfo("技能点达到上限,强制使用")
-			for k,item in pairs(skillList) do
-				if self:UseSkill(k) then
-					return true
-				end
-			end
+			if self.SkillReleaseWhenFull=="用户队列" then
+				ShowInfo.RunningInfo("用户队列未激活，使用军费")
+				self:UseSkill("军费")
+			else
+				ShowInfo.RunningInfo("技能点达到上限,强制使用")
+				self:UseSkill(self.SkillReleaseWhenFull)
+			end	
 		end
 	else
-		local lastTimeQueueIndex=self.NowUseSkillIndex
-		while true do
-			if not self:Enter() then
-				return false
+		if needUseNow then
+			if self.SkillReleaseWhenFull=="用户队列" then
+				self:UseSkillsDirect()
+			else
+				self:UseSkill(self.SkillReleaseWhenFull)
 			end
-			
-			self.NowUseSkillIndex=self.NowUseSkillIndex+1
-			if self.NowUseSkillIndex>self.NowSkillNum then
-				self.NowUseSkillIndex=1
-			end
-			ShowInfo.RunningInfo("技能队列"..self.NowUseSkillIndex)
-			self:UseSkill(self.useSkills[self.NowUseSkillIndex])
-			sysLog(self.NowUseSkillIndex.."/"..lastTimeQueueIndex)
-			if self.NowUseSkillIndex==lastTimeQueueIndex then
-				
-				break
-			end
+		else
+			self:UseSkillsDirect()
 		end
 	end
 	ShowInfo.RunningInfo("策略释放结束")
+end
+function Skill:UseSkillsDirect()
+	local lastTimeQueueIndex=self.NowUseSkillIndex
+	while true do
+		if not self:Enter() then
+			return false
+		end
+		
+		self.NowUseSkillIndex=self.NowUseSkillIndex+1
+		if self.NowUseSkillIndex>self.NowSkillNum then
+			self.NowUseSkillIndex=1
+		end
+		ShowInfo.RunningInfo("技能队列"..self.NowUseSkillIndex.."/"..lastTimeQueueIndex)
+		if not self:UseSkill(self.useSkills[self.NowUseSkillIndex]) then
+			self.NowUseSkillIndex=self.NowUseSkillIndex-1--等待上一使用后使用下一个
+		end
+		if self.NowUseSkillIndex==lastTimeQueueIndex then
+			
+			break
+		end
+	end
 end
 function Skill:UseSkill(index)
 	
@@ -308,15 +320,18 @@ function Skill:GetCardPos(index)
 	return 240+index*200
 end
 function Skill:UseCard(index)
+	sleepWithCheckLoading(200)
 	if self:CheckCardLeft(index) then
 		tap(1400,Skill:GetCardPos(index))--使用
+		sleepWithCheckLoading(200)
 		return true
 	else
 		if Setting.Skill.SupplyCard.card不足时购买 then
 			if Setting.Main.Res.Diamond>50*index+50 then
 				tap(1400,Skill:GetCardPos(index))--购买
-				mSleep(100)
+				sleepWithCheckLoading(200)
 				tap(970,650)--购买确认
+				sleepWithCheckLoading(200)
 				ShowInfo.RunningInfo("购买策略卡"..index)
 				return true
 			else

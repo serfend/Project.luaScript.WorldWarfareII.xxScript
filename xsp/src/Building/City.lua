@@ -15,6 +15,7 @@ City = {
 	IsMainCity=false,--是否是主城
 	CityProperty="233",
 	nowMainBuildingName="主城",
+	needBuild=false,cityNeedBuild=false,fieldNeedBuild=false,
 }--初始化
 
 function City:new (o)
@@ -25,6 +26,9 @@ function City:new (o)
 end
 function City:CheckIfMainBuilding()
 	self:FindMainBuilding(self.pos.y-150, self.pos.y+60)
+	self.needBuild= Setting.Building[self.CityProperty.."Setting"].EnableAutoDevelop
+	self.cityNeedBuild=Setting.Building[self.CityProperty.."Setting"].EnableCityDevelop
+	self.fieldNeedBuild=Setting.Building[self.CityProperty.."Setting"].EnableFieldDevelop
 end
 function City:FindMainBuilding(y1,y2)
 		local x,y=  findColor({8,y1 , 524,y2}, 
@@ -48,20 +52,16 @@ function City:Run()
 	sysLog("城市建设开始")
 	maxBuildingPriorityRank=7
 	--self:ShowAllBuildingQueue() --展示所有建筑列表
-	if Setting.Building[self.CityProperty.."Setting"].EnableAutoDevelop==false then
-		ShowInfo.RunningInfo("城市建设被禁用")
-		return true,-1
-	end
 	self:RunBuilding("City")--城市建设
 	self:CheckIfSupplyInsufficient()--判断补给
 	if self.pos.y>800 then
 		mSleep(300)
 		swip(20,800,20,500,10)
 		self.pos.y=self.pos.y-300
-		mSleep(1500)
+		mSleep(1000)
 	end
 	while true do
-		local nextX,nextY=City:FindNextAero()
+		local nextX,nextY=self:FindNextAero()
 		
 		ShowInfo.RunningInfo("寻找下个区域:"..nextY)
 		if nextX>-1 then
@@ -115,8 +115,14 @@ function City:RunBuilding(id)
 	if self:CheckNeedConcilite() then
 		return true
 	end
+	if (id=="Field" and not self.fieldNeedBuild) or (id=="City" and not self.cityNeedBuild) then
+		ShowInfo.RunningInfo(id.."建筑禁止")
+		return true
+	else
+		ShowInfo.RunningInfo(id.."开始建筑")
+	end
 	if not self:CheckBuildingQueue(id) then return true end
-	ShowInfo.RunningInfo(id.."开始建筑")
+	
 	lastTimeFindResAero=false
 	local AllFoundBuilding,validBuilding=self:GetAeraAllValidBuilding(id)
 	sysLog("共可建筑:"..validBuilding)
@@ -134,16 +140,16 @@ function City:RunBuilding(id)
 	end
 end
 function City:CollectFieldEvent()
-	if not GameTask:CheckNeedRefresh() then
+	if not mapEvent:CheckNeedRefresh() then
 		return false
 	end
 		x, y = findColor({457, 74, 537, 1076}, 
-	"0|0|0xfffefe,-9|-10|0xfffefe,-7|-19|0xece6dc,-24|-13|0xe7dfd3,-25|-19|0xf1ede6,-22|-25|0xf0ebe3,-16|-18|0x8b6426,-16|-13|0x8a6325,-21|-18|0x8b6426,-11|-18|0x8b6426,-16|-23|0x8c6627",
+	"0|0|0xffffff,-15|-15|0x8b6425,-6|-6|0xffffff,-24|-24|0xe2dacc",
 	90, 0, 0, 0)
 	if x > -1 then
 		tap(x,y)
 		sleepWithCheckLoading(2000)--等待目标出现
-		GameTask:CollectMapEvent()
+		mapEvent:CollectMapEvent()
 		Building:Enter()
 		Building:SelectNowFocus()
 	else
@@ -167,22 +173,58 @@ function City:GetBuildingQueueFreeNum()
 	ShowInfo.RunningInfo("当前区域可建筑队列"..#point)
 	return #point 
 end
+function City:GetBuildingRemainTime(Index)
+	--1425 290,1476 323
+	local code,tmp=ocr:GetNumBold(1425+(Index-1)*385,290,1476+(Index-1)*385,323)
+	local result=tonumber(tmp) or -1
+	if result<10 then
+		result=-1
+	end
+	return result
+end
 function City:CheckImmediateBuilding()
-	local flag=false
-	x, y = findColor({1325, 279, 1882, 400}, 
+	local flag=0
+	sysLog(self.CityProperty)
+	
+	x, y = findColor({1325, 279, 1877, 400}, --两个都要检查
 	"0|0|0xfafafa,-3|6|0xfbfbfb,2|14|0xf1f0ef,14|14|0xf1f0ef,17|6|0xfbfbfb,18|24|0xf5f4f3,30|25|0xf4f3f3,34|9|0xf9f8f8,45|2|0xfbfbfb,50|17|0xfbfbfa",
 	90, 0, 0, 0)
 	if x > -1 then
-		tap(x,y+70)
-		ShowInfo.RunningInfo("立即完成免费建筑")
-		sleepWithCheckLoading(200)
-		tap(961,800)
-		sleepWithCheckLoading(800)
-		flag=true
-		nowBuildingRank=1
+		flag=x+20
+	else
+		if Setting.Building[self.CityProperty.."Setting"].EnableAutoImmediateBuilding then
+			for nowQueueIndex=1,2 do
+				local nowPrice= self:GetBuildingRemainTime(nowQueueIndex)
+				local minImmediatePrice=Setting.Building[self.CityProperty.."Setting"].Value.MinImmediatePrice
+				local maxImmediatePrice=Setting.Building[self.CityProperty.."Setting"].Value.MaxImmediatePrice
+				ShowInfo.RunningInfo(string.format("队列%d最低秒价/当前价/最高秒价=%d/%d/%d",nowQueueIndex,minImmediatePrice,nowPrice,maxImmediatePrice))
+				if nowPrice<=maxImmediatePrice and nowPrice>=minImmediatePrice and nowPrice>0 then
+					flag=nowQueueIndex
+					break
+				end
+			end
+		end
+	end
+	if flag>0 then
+		self:CompleteImmediateBuilding(flag)
 		self:CheckImmediateBuilding()
 	end
-	return flag
+	return flag>0
+end
+function City:CompleteImmediateBuilding(Index)
+	if Index>2 then
+		self:CompleteImmediateBuildingEnd(Index)
+	else
+		self:CompleteImmediateBuildingEnd(1350+(Index-1)*385)
+	end
+end
+function City:CompleteImmediateBuildingEnd(posX)
+		tap(posX,350)--加速键
+		ShowInfo.RunningInfo("立即完成建筑")
+		sleepWithCheckLoading(200)
+		tap(961,800)--确认
+		sleepWithCheckLoading(800)
+		nowBuildingRank=1
 end
 function City:ShowAllBuildingQueue()--调试方法，可不用
 	for index=4,5 do
@@ -245,7 +287,7 @@ function City:BuildBuildingInRank(rank,CityOrField,ValidBuilding)
 				end
 				if canBuild then
 					ShowInfo.RunningInfo("处理建筑"..rank..building[1])
-					local points=City:FindBuilding(building[1])
+					local points=self:FindBuilding(building[1])
 					if #points>0 then
 						for i,buildingPos in ipairs(points) do
 							local buildingX=buildingPos.x
@@ -260,7 +302,7 @@ function City:BuildBuildingInRank(rank,CityOrField,ValidBuilding)
 							if not CityBuilding:UpLevel() then
 								CityBuilding:Rebuild()
 							end
-							if not City:CheckBuildingQueue(CityOrField) then
+							if not self:CheckBuildingQueue(CityOrField) then
 								return false
 							end
 						end
@@ -324,7 +366,7 @@ function City:FindBuilding(BuildingName,findNextPage)--
 	end
 end
 function City:FindBuildingAtCurrentPage(BuildingName)
-	return  findColors({550,660,1919,665}, 
+	return  findColors({550,655,1919,670}, --441*1.5
 			BuildingInfoList[BuildingName] ,
 			90, 0, 0, 0)
 end
@@ -337,12 +379,20 @@ function City:GetAeraAllValidBuilding(CityOrField)--寻找可用建筑算法可�
 		local tmpBuilding=self:GetPageValidBuilding(CityOrField)
 		
 		local thisValidBuildingNum=0
+		local resBuildingNum=0
 		for i,building in ipairs(tmpBuilding) do
-		if building.Status=="可升级" or building.Status=="资源不足" or building.Status=="重建" then
+			if building.Status=="可升级" or building.Status=="资源不足" or building.Status=="重建" then
 				if building.Status=="可升级" or building.Status=="重建" then 
 					thisValidBuildingNum=thisValidBuildingNum+1
 				end
 				table.insert(AllValidBuilding,building)
+				if building.Name=="资源区" then
+					if self:resBuildingNum(tmpBuilding)>1 then
+						building.Name="双资源区"
+					else
+						building.Name="单资源区"
+					end
+				end
 			end
 		end
 		validBuildingNum=validBuildingNum+thisValidBuildingNum
@@ -352,13 +402,26 @@ function City:GetAeraAllValidBuilding(CityOrField)--寻找可用建筑算法可�
 		else
 			if not haveNextPage then
 				break
+			else
+				if self:CheckOnButtom() then
+					break
+				end
 			end
-			haveNextPage=City:NextPage() 
+			haveNextPage=self:NextPage() 
 		end
 	end
 	ShowInfo.RunningInfo("处理完成..."..validBuildingNum)
 	self:RollToBegin()
 	return AllValidBuilding,validBuildingNum
+end
+function City:resBuildingNum(buildingList)
+	local result=0
+	for i,building in ipairs(buildingList) do
+		if building.Name=="铁矿" or building.Name=="橡胶" or building.Name=="油井" then
+			result=result+1
+		end
+	end
+	return result
 end
 function City:GetPageValidBuilding(CityOrField)
 	local PageValidBuilding={}
@@ -376,7 +439,7 @@ function City:GetPageValidBuilding(CityOrField)
 					findBuildingName=building[1]
 				end
 				--sysLog("寻找"..findBuildingName..":"..BuildingInfoList[findBuildingName])
-				local buildingPoint=City:FindBuildingAtCurrentPage(findBuildingName)
+				local buildingPoint=self:FindBuildingAtCurrentPage(findBuildingName)
 				if #buildingPoint>0 then
 					buildingX,buildingY = buildingPoint[1].x,buildingPoint[1].y
 				else
@@ -387,19 +450,7 @@ function City:GetPageValidBuilding(CityOrField)
 				if buildingX>-1 then
 					sysLog("找到"..findBuildingName)
 					local tmpBuilding=CityBuilding:new()
-					if findBuildingName=="资源区" then
-						if not lastTimeFindResAero then
-							isDoubleResAero=City:CheckIfNotDoubleResourceAero()
-							lastTimeFindResAero=true
-							if isDoubleResAero then
-								tmpBuilding.Name="双资源区"
-							else
-								tmpBuilding.Name="单资源区"
-							end
-						end
-					else
-						tmpBuilding.Name=building[1]
-					end
+					tmpBuilding.Name=building[1]
 					if tmpBuilding.Name~="" then
 						tmpBuilding.Status=CityBuilding:GetBuildingStatus(buildingX)
 						tmpBuilding.Level=CityBuilding:GetBuildingLevel(buildingX)
@@ -407,9 +458,9 @@ function City:GetPageValidBuilding(CityOrField)
 							self.nowMainBuildingName=findBuildingName
 						end
 						if tmpBuilding.Status=="可升级" or tmpBuilding.Status=="重建" then
-							sysLog("发现建筑:"..tmpBuilding.Name.."在"..buildingX)
+							sysLog("发现建筑:"..findBuildingName.."在"..buildingX)
 						else
-							sysLog(tmpBuilding.Name.."条件不符合:"..tmpBuilding.Status.."在"..buildingX)
+							sysLog(findBuildingName.."条件不符合:"..tmpBuilding.Status.."在"..buildingX)
 						end
 						table.insert(PageValidBuilding,tmpBuilding)
 					end
@@ -423,14 +474,7 @@ function City:GetPageValidBuilding(CityOrField)
 	keepScreen(false)
 	return  PageValidBuilding
 end
-function City:CheckIfNotDoubleResourceAero()--用于判断单资源或双资源
-	local point=City:FindBuilding("狙击塔",findNextPage)
-	if #point>0 then
-		return false
-	else
-		return true
-	end
-end
+
 function City:CheckNeedConcilite()
 	if Setting.Building[self.CityProperty.."Setting"].EnableAutoConcilite then
 		local x, y =Form:GetBuildingButton("安抚")
@@ -562,7 +606,7 @@ function City:CheckOnTop()
 end
 function City:CheckOnButtom()
 	x, y = findColor({1860, 489, 1919, 542}, 
-	"0|0|0x373e4a,0|12|0x373e4a",
+	"0|0|0x373e4a",
 	90, 0, 0, 0)
 	if x > -1 then
 		return false

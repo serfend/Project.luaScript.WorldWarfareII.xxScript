@@ -23,6 +23,9 @@ end
 function pos:GetImageDescription(pixInterval,size)
 	size=size-1--大小为n^2
 	self.y,self.x=catchTouchPoint()
+		mSleep(200)
+		--tap(1515,180)
+		mSleep(200)
 	mSleep(500)
 	keepScreen(true)--截图
 	self.y=1080-self.y
