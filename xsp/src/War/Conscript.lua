@@ -1,6 +1,6 @@
 Conscript = {
 	nowState=0,
-	needMerge=true,nextTimeNeedMerge=false
+	needMerge=2,nextTimeNeedMerge=0
 }--初始化
 
 function Conscript:new (o)
@@ -13,13 +13,32 @@ function Conscript:Run()
 	ShowInfo.RunningInfo("军事生产开始")
 	local success=false
 	success=self:RunBuild()
-	success=success and self:RunConscript()
+	if Setting.Army.Enable.AutoMerge==false then
+		ShowInfo.RunningInfo("自动合并部队被禁用")
+	else
+		success=success and self:RunConscript()
+	end
+	
 	return success
 end
+function Conscript:ClearAll(id)--Build Manufacture
+	if dialogRet("确定要清空"..id.."吗","确定","取消","",0)==0 then
+		for i,item in ipairs(Setting.Army.army) do
+			setStringConfig("Military.".. id .."."..item[1],"0")
+			item[id]=0
+		end
+		dialog("已清空"..id,5)
+	end
+end
+
 function Conscript:GetQueueNum(x1,y1,x2,y2)
 	local code,result=ocr:GetNum(x1,y1,x2,y2)
 	result=string:getNumOnly(result)
 	sysLog("Conscript:GetQueueNum:"..result)
+	if result=="" then
+		dialog("获取队列失败",5)
+		return -1,-1
+	end
 		local nowQueue=0
 		local maxQueue=0
 	local checkIfNumber=string.find(result,"/") or 0
@@ -82,7 +101,7 @@ function Conscript:Reset()
 	Conscript:CheckBuildStatus(true)
 end
 function Conscript:RunBuild()
-	local needManufacture=false
+	local needManufacture=0
 	self:CheckBuildStatus()
 	if Setting.Army.Enable.生产军备==true then
 		for i,item in ipairs(Setting.Army.army) do
@@ -90,7 +109,7 @@ function Conscript:RunBuild()
 				ShowInfo.RunningInfo("错误的设置"..item[1])
 				toast("错误的设置"..item[1])
 			elseif item.Manufacture>0 then
-				needManufacture=true
+				needManufacture=item[2]
 				break
 			end
 		end
@@ -98,9 +117,9 @@ function Conscript:RunBuild()
 		ShowInfo.RunningInfo("军备生产被禁用")
 		return true
 	end
-	if needManufacture then
-		if Conscript:Enter("军备") then
-			if not self:DoManufacture() then
+	if needManufacture>0 then
+		if Conscript:Enter("军备",needManufacture) then
+			if not self:DoManufacture(needManufacture) then
 				Conscript:CheckBuildStatus()
 			end
 			Form:Exit()
@@ -108,7 +127,7 @@ function Conscript:RunBuild()
 	end
 	return true
 end
-function Conscript:DoManufacture()
+function Conscript:DoManufacture(ManufactureIndex)--陆军 空军 海军
 	ShowInfo.RunningInfo("生产军备开始")
 	keepScreen(false)
 	sleepWithCheckLoading(1000)
@@ -117,59 +136,63 @@ function Conscript:DoManufacture()
 		if item.Manufacture>0 then
 			if nowQueue>=2 then
 				ShowInfo.RunningInfo("军备正在生产中，取消")
-				return false
+				return true
 			else
-				ShowInfo.RunningInfo("生产"..item[1]..",数量"..item.Manufacture)
-				local x,y=self:GetArmamentAtPage(item[1])
-				if x>-1 then
-					tap(x,y)--开始生产
-					mSleep(200)
-					local maxManufactureNum = Form:GetNowManufactureNum()
-					if maxManufactureNum>item.Manufacture then
-						Form:Manufacture(item.Manufacture)--可建造数量大于需求则只建造需求
-						item.Manufacture=0
+				if ManufactureIndex==item[2] then--判断军队类型
+					ShowInfo.RunningInfo("生产"..item[1]..",数量"..item.Manufacture)
+					local x,y=self:GetArmamentAtPage(item[1])
+					if x>-1 then
+						tap(x,y)--开始生产
+						mSleep(200)
+						local maxManufactureNum = Form:GetNowManufactureNum()
+						if maxManufactureNum>item.Manufacture then
+							Form:Manufacture(item.Manufacture)--可建造数量大于需求则只建造需求
+							item.Manufacture=0
+						else
+							Form:Manufacture()
+							item.Manufacture=item.Manufacture-maxManufactureNum
+						end
+						setStringConfig("Military.Manufacture."..item[1],tostring(item.Manufacture))
+						ShowInfo.RunningInfo("还需生产"..item.Manufacture)
+						nowQueue=nowQueue+1
 					else
-						Form:Manufacture()
-						item.Manufacture=item.Manufacture-maxManufactureNum
+						ShowInfo.RunningInfo("未能找到目标军备")
+						return false
 					end
-					setStringConfig("Military.Manufacture."..item[1],tostring(item.Manufacture))
-					ShowInfo.RunningInfo("还需生产"..item.Manufacture)
-					nowQueue=nowQueue+1
-				else
-					ShowInfo.RunningInfo("未能找到目标军备")
 				end
 			end
 		end
 	end
 end
 function Conscript:RunConscript()
-	local needBuild=false
-	if self.nextTimeNeedMerge then 
-		self.nextTimeNeedMerge=false
-		self.needMerge=true
+	local needBuild=0
+	if self.nextTimeNeedMerge>0 then 
+		self.nextTimeNeedMerge=0
+		self.needMerge=self.nextTimeNeedMerge
 	end
 	Conscript:CheckConscriptStatus(false)
 	if Setting.Army.Enable.组建部队==true then
 		for i,item in ipairs(Setting.Army.army) do
 			if item.Build>0 then
-				needBuild=true
+				needBuild=item[2]
 				break
 			end
 		end
 	else
 		ShowInfo.RunningInfo("组建部队被禁用")
 	end
-	if needBuild or self.needMerge then
-		if Conscript:Enter("组建") then
-			if needBuild then
-				if not self:DoConscript() then
+	if needBuild>0 or self.needMerge>0 then
+		local selectBuilding=(self.needMerge>0 and self.needMerge or needBuild)
+		if Conscript:Enter("组建",selectBuilding) then
+			if needBuild>0 then
+				if not self:DoConscript(needBuild) then
 					Conscript:CheckConscriptStatus(false)
 				else
 					mSleep(500)
 				end
 			end
-			if self.needMerge then
-				self:DoMerge()
+			if self.needMerge>0 then
+				self:DoMerge(self.needMerge)
 			end
 			Form:Exit(true)
 		else
@@ -179,33 +202,36 @@ function Conscript:RunConscript()
 	return true
 end
 local armyTypeCollection={}
-function Conscript:DoMerge()
-	self.needMerge=false
+function Conscript:DoMerge(armyIndex)
+	self.needMerge=0
 	ShowInfo.RunningInfo("尝试合并部队")
 	mSleep(500)
 	armyTypeCollection={}
-	self:DoMergeOnce("步兵",true)
+	self:DoMergeOnce("步兵",armyIndex)
 	printTable(armyTypeCollection)
 	for k,v in pairs(armyTypeCollection) do
 		if k~="步兵" then
 			--if v>1 then 
 				--sysLog("检查"..k..","..v)
-				self:DoMergeOnce(k,false) 
+				self:DoMergeOnce(k) 
 			--end
 		end
 	end
 	ShowInfo.RunningInfo("尝试合并部队结束")
 end
-function Conscript:CollectArmyType()
+function Conscript:CollectArmyType(armyIndex)
 	keepScreen(true)
 	for i,item in ipairs(Setting.Army.army) do
-		x,y=self:FindArmyAtPage(item[1])
-		if x>-1 then
-			ShowInfo.RunningInfo(string.format("发现%d:%s",i,item[1]))
-			armyTypeCollection[item[1]]=armyTypeCollection[item[1]] or 0
-			armyTypeCollection[item[1]]=armyTypeCollection[item[1]]+1
-		else
-			--ShowInfo.RunningInfo(string.format("寻找%d:%s",i,item[1]))
+		if item[2]==armyIndex then
+			x,y=self:FindArmyAtPage(item[1])
+			--sysLog("finding"..item[1])
+			if x>-1 then
+				ShowInfo.RunningInfo(string.format("发现%d:%s",i,item[1]))
+				armyTypeCollection[item[1]]=armyTypeCollection[item[1]] or 0
+				armyTypeCollection[item[1]]=armyTypeCollection[item[1]]+1
+			else
+				--ShowInfo.RunningInfo(string.format("寻找%d:%s",i,item[1]))
+			end
 		end
 	end
 	keepScreen(false)
@@ -217,12 +243,13 @@ end
 function Conscript:DoMergeOnce(targetArmyName,collectArmyType)
 	local sumNum=0
 	local findNextTime=true
+	collectArmyType=collectArmyType or 0
 	ShowInfo.RunningInfo("尝试合并"..targetArmyName)
 	while true do 
 		local thisTimeFindArmyNum=self:SelectArmyAtPage(targetArmyName) 
 		ShowInfo.RunningInfo(targetArmyName..thisTimeFindArmyNum.."/"..sumNum)
 		sumNum=sumNum+thisTimeFindArmyNum
-		if collectArmyType then self:CollectArmyType() end
+		if collectArmyType>0 then self:CollectArmyType(collectArmyType) end
 		if not findNextTime then break end
 		if not self:ArmyNextPage() then
 			ShowInfo.RunningInfo("到达底部")
@@ -347,44 +374,48 @@ function Conscript:ArmyLastPage()
 	end
 	return not atTop
 end
-function Conscript:DoConscript()
+function Conscript:DoConscript(armyIndex)
+		
 		ShowInfo.RunningInfo("组建部队开始")
 		sleepWithCheckLoading(500)
 		local success=false
 		local needPushButton=true
 		local nowQueue,maxQueue=self:GetConscriptQueueNum()
-		if nowQueue>0 then self.nextTimeNeedMerge=true end--存在组建时则需要检查
+		sleepWithCheckLoading(500)
+		if nowQueue>0 then self.nextTimeNeedMerge=armyIndex end--存在组建时则需要检查
 		for i,item in ipairs(Setting.Army.army) do
-			if item.Build>0 then
-				if needPushButton then
-					tap(1900,1050)--组建按钮
-					needPushButton=false
-				end
-				
-				if nowQueue>=4 then
-					ShowInfo.RunningInfo("正在组建中,取消")
-					return false
-				else
-					ShowInfo.RunningInfo("生产"..item[1]..",数量"..item.Build)
-					local find=self:SelectTargetArms(item[1])
-					if find then
-						self.needMerge=true
-						mSleep(200)--开始生产
-						local maxManufactureNum = Form:GetNowManufactureNum()
-						if maxManufactureNum>item.Build then
-							Form:Manufacture(item.Build)--可建造数量大于需求则只建造需求
-							item.Build=0
-						else
-							Form:Manufacture()
-							item.Build=item.Build-maxManufactureNum
-						end
-						setStringConfig("Military.Build."..item[1],tostring(item.Build))
-						ShowInfo.RunningInfo("还需生产"..item.Build)
-						needPushButton=true
-						nowQueue=nowQueue+1
-						success=true
+			if armyIndex==item[2] then
+				if item.Build>0 then
+					if nowQueue>=4 then
+						ShowInfo.RunningInfo("正在组建中,取消")
+						return true
 					else
-						ShowInfo.RunningInfo("未能找到目标军备")
+						if needPushButton then
+							tap(1900,1050)--组建按钮
+							needPushButton=false
+							sleepWithCheckLoading(500)
+						end
+						ShowInfo.RunningInfo("生产"..item[1]..",数量"..item.Build)
+						local find=self:SelectTargetArms(item[1],nil,nil,armyIndex)
+						if find then
+							self.needMerge=armyIndex
+							mSleep(200)--开始生产
+							local maxManufactureNum = Form:GetNowManufactureNum()
+							if maxManufactureNum>item.Build then
+								Form:Manufacture(item.Build)--可建造数量大于需求则只建造需求
+								item.Build=0
+							else
+								Form:Manufacture()
+								item.Build=item.Build-maxManufactureNum
+							end
+							setStringConfig("Military.Build."..item[1],tostring(item.Build))
+							ShowInfo.RunningInfo("还需生产"..item.Build)
+							needPushButton=true
+							nowQueue=nowQueue+1
+							success=true
+						else
+							ShowInfo.RunningInfo("未能找到目标军备")
+						end
 					end
 				end
 			end
@@ -418,7 +449,7 @@ function Conscript:FindArmamentAtPage(armamentName)--寻找军备
 		return x,y
 	end
 end
-function Conscript:SelectTargetArms(targetName,tryTime,lastSelectName)
+function Conscript:SelectTargetArms(targetName,tryTime,lastSelectName,selectArmyIndex)
 	local nowRecognize=90
 	local nowSelectName=""
 	tryTime=tryTime or 0
@@ -427,9 +458,13 @@ function Conscript:SelectTargetArms(targetName,tryTime,lastSelectName)
 	
 
 	while true do
-		nowSelectName=self:GetNowSelectArms(nowRecognize)
+		nowSelectName=self:GetNowSelectArms(nowRecognize,selectArmyIndex)
 		if nowSelectName=="" then--只有在找到后才不退出
 			nowRecognize=nowRecognize-5
+			if nowRecognize==80 then
+				nowSelectName="unknown"
+				break
+			end
 		else
 			break
 		end
@@ -446,22 +481,24 @@ function Conscript:SelectTargetArms(targetName,tryTime,lastSelectName)
 				if lastSelectName~=nowSelectName then
 					tryTime=0
 				end
-				return self:SelectTargetArms(targetName,tryTime+1,nowSelectName)
+				return self:SelectTargetArms(targetName,tryTime+1,nowSelectName,selectArmyIndex)
 			end
 		end
 		return false
 	end
 end
-function Conscript:GetNowSelectArms(nowRecognize)
+function Conscript:GetNowSelectArms(nowRecognize,selectArmyIndex)
 	for i,item in ipairs(Setting.Army.army) do
-		local color=ArmyIconList[item[1]][2]
-		--sysLog(targetName..":"..color)
-		local x,y=findColor({940,645,950,655},color,nowRecognize,0,0,0)
-		if x>-1 then
-			sysLog("找到"..item[1])
-			return item[1]
-		else
-			--sysLog("失败:"..item[1])
+		if selectArmyIndex == item[2] then
+			local color=ArmyIconList[item[1]][2]
+			--sysLog(color)
+			local x,y=findColor({940,645,950,655},color,nowRecognize,0,0,0)--648
+			if x>-1 then
+				--sysLog("找到"..item[1])
+				return item[1]
+			else
+				--sysLog("失败:"..item[1])
+			end
 		end
 	end
 	return ""
@@ -502,9 +539,10 @@ function Conscript:ManufactureCheckOnTop()
 	95, 0, 0, 0)
 	return x==-1
 end
-function Conscript:Enter(target)
-	local targetBuilding=(target=="军备" and "兵工厂" or "陆军基地")
+function Conscript:Enter(target,index)
+	local targetBuilding=(target=="军备" and "兵工厂" or (index==1 and "陆军基地" or (index==2 and "空军基地")))
 	local targetButton=(target=="军备" and "生产军备" or "部队列表")
+	if index==3 and target~="军备" then return false end--禁止进入海军基地
 	Building:SelectMainCityBuilding()
 	local targrtPoint=City:FindBuilding(targetBuilding)
 	if #targrtPoint>0 then
@@ -514,6 +552,18 @@ function Conscript:Enter(target)
 		if buildNewButtonPosX>-1 then
 			tap(buildNewButtonPosX,buildNewButtonPosY)
 			mSleep(500)--等待界面加载
+			if target=="军备" then
+				--军备页面选择
+				if index==1 then
+					tap(200,30)
+				elseif index==2 then
+					tap(400,30)
+				elseif index==3 then
+					tap(600,30)
+				end
+				mSleep(200)
+			end
+			
 			return true
 		else
 			return false

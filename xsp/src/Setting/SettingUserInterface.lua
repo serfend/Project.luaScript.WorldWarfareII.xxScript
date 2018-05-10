@@ -72,6 +72,8 @@ function UI:GetArmySetting(result)
 			elseif armySetting[2]=="Build" or armySetting[2]=="Manufacture" then
 				Setting.Army.army[Setting.Army.armyIndex[armySetting[3]]][armySetting[2]]=tonumber(v)
 				setStringConfig("Military."..armySetting[2].."."..armySetting[3],tostring(v))
+			elseif armySetting[2]=="Clearing" then
+				Setting.Army.Clearing[armySetting[3]]=v=="0" and true or false
 			else
 				dialog("无法识别的设置"..k)
 			end
@@ -251,6 +253,8 @@ function UI:BuildArmyPage(ui)
 	p = ui:newPage("军备")
 	self:BuildArmyList(p,"生产军备")	
 	p = ui:newPage("组建")
+	p:addCheckBoxGroup_single(4,1,"Military.Enable.AutoMerge",false,"智能合并部队")
+	p:newLine()
 	self:BuildArmyList(p,"组建部队")	
 	--p:addCheckBoxGroup_single(8,1,"Military.Enable.Extract","1","启用拓展领土（未开放）")
 end
@@ -258,6 +262,7 @@ function UI:BuildArmyList(p,id)
 	self.MilitaryId=tostring(os.time())
 	nowArmyLineNum=0
 	p:addCheckBoxGroup_single(4,1,"Military.Enable."..id,false,"启用"..id)
+	p:addCheckBoxGroup_single(4,1,"Military.Clearing."..id.."."..self.MilitaryId,false,"清空(谨慎开启)")
 	p:newLine()
 	for i,item in ipairs(Setting.Army.army) do
 		if	i % 3==1 and i>1 then
@@ -280,6 +285,7 @@ function UI:AddArmyList(p,id,Name,enableBuildAll,defaultNum)
 	
 	p:addLabel(1.5,1,Name)
 	local controlId=""
+
 	if id=="组建部队" then
 		controlId="Military.Build."..Name
 		p:addCheckBoxGroup_single(0.35,1,"Military.EnableBuildAll."..Name.."."..self.MilitaryId,buildEnable,"t")

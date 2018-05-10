@@ -40,6 +40,11 @@ function main()
 	if Setting.Task.EnableAutoProcessTaskDuplicate then
 		MainTask.MainThreadTaskRefresh=false
 	end
+	if Setting.Army.Clearing.组建部队 then Conscript:ClearAll("Build") end
+	if Setting.Army.Clearing.生产军备 then Conscript:ClearAll("Manufacture") end
+	if Setting.Building.CityMainSetting.EnableAutoImmediateBuilding or Setting.Building.CityOtherSetting.EnableAutoImmediateBuilding then
+		dialog("注意,您已开启水晶秒建筑功能\n如需关闭 请立即停止脚本并设置",5)
+	end
 	--GetUserImages(45,2)
 	ResetForm()--初始化
 	buildPipeline()

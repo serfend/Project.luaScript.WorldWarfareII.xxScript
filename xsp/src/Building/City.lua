@@ -31,8 +31,8 @@ function City:CheckIfMainBuilding()
 	self.fieldNeedBuild=Setting.Building[self.CityProperty.."Setting"].EnableFieldDevelop
 end
 function City:FindMainBuilding(y1,y2)
-		local x,y=  findColor({8,y1 , 524,y2}, 
-	"0|0|0xdde2eb,7|10|0x5c7093,4|13|0x40557d",
+		local x,y=  findColor({360,y1 , 415,y2}, 
+	"0|0|0xe7eaef,0|7|0x7e91b4,0|15|0x94a1b8,0|22|0x283f6a",
 	90, 0, 0, 0)--寻找主城标识
 	if x>-1 then
 		sysLog("城市为主城")
@@ -49,7 +49,8 @@ end
 local maxBuildingPriorityRank=7
 function City:Run()
 	self:CheckIfMainBuilding()
-	sysLog("城市建设开始")
+	
+	ShowInfo.RunningInfo("城市建设开始")
 	maxBuildingPriorityRank=7
 	--self:ShowAllBuildingQueue() --展示所有建筑列表
 	self:RunBuilding("City")--城市建设
@@ -108,6 +109,10 @@ local lastTimeFindResAero=false
 local isDoubleResAero=false
 local nowBuildingRank=1
 function City:RunBuilding(id)
+	if self.needBuild==false then
+		sleepWithCheckLoading(100)
+		return true
+	end
 	sleepWithCheckLoading(500)
 	if Setting.Task.EnableActiveCollectEvent then
 		self:CollectFieldEvent()

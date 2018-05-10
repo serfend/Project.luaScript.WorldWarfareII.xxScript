@@ -85,8 +85,11 @@ Setting={
 				石油={false,0},
 				人口={false,0},
 			},
+			
+			EnableAutoImmediateBuilding=false,
 			Value={
 				MinImmediatePrice=0,
+				MaxImmediatePrice=0,
 			}
 		},
 		CityOtherSetting={
@@ -98,8 +101,11 @@ Setting={
 			EnableAutoConcilite=false,
 			EnableCityDevelop=false,
 			EnableFieldDevelop=false,
+			
+			EnableAutoImmediateBuilding=false,
 			Value={
 				MinImmediatePrice=0,
+				MaxImmediatePrice=0,
 			}
 		},
 		CityIndex={
@@ -111,51 +117,52 @@ Setting={
 
 	},
 	Army={
-		Enable={},
-		army={
-			[1]={"步兵"},
-			[2]={"侦查车"},
-			[3]={"盟轻坦"},
-			[4]={"德轻坦"},
-			[5]={"反坦克"},
-			[6]={"盟摩托"},
-			[7]={"德摩托"},
-			[8]={"美装甲车"},
-			[10]={"德轻歼击"},
-			[9]={"美中坦"},
-			[11]={"盟中坦"},
-			[12]={"美轻歼击"},
-			[13]={"苏轻歼击"},
-			[14]={"攻城炮"},
-			[15]={"突击炮"},
-			[16]={"榴弹炮"},
-			[17]={"高射炮"},
-			[18]={"德重坦"},
-			[19]={"美重坦"},
-			[20]={"德重歼击"},
-			[21]={"自行火炮"},
-			[22]={"美重歼击"},
-			--[23]={"德虎超坦"},
+		Enable={
+			AutoMerge=false,
+			
 		},
-		navy={
-			--待添加
-		},
-		air={
-			--待添加
+		Clearing={},
+		army={--优先级 名称 种类 是否组建
+			[1]={"步兵",1,true},
+			[2]={"侦查车",1,true},
+			[3]={"盟轻坦",1,true},
+			[4]={"德轻坦",1,true},
+			[5]={"反坦克",1,true},
+			[6]={"盟摩托",1,true},
+			[7]={"德摩托",1,true},
+			[8]={"美装甲车",1,true},
+			[10]={"德轻歼击",1,true},
+			[9]={"美中坦",1,true},
+			[11]={"盟中坦",1,true},
+			[12]={"美轻歼击",1,true},
+			[13]={"苏轻歼击",1,true},
+			[14]={"攻城炮",1,true},
+			[15]={"突击炮",1,true},
+			[16]={"榴弹炮",1,true},
+			[17]={"高射炮",1,true},
+			[18]={"德重坦",1,true},
+			[19]={"美重坦",1,true},
+			[20]={"德重歼击",1,true},
+			[21]={"自行火炮",1,true},
+			[22]={"美重歼击",1,true},
+			[23]={"德虎超坦",1,true},
+			[24]={"苏超歼击",1,true},
+			[25]={"侦察机",2,true},
+			[26]={"运输机",2,true},
+			[27]={"轰炸机",2,true},
+			[28]={"战斗机",2,true},
+			[29]={"俯冲轰炸机",2,true},
+			[30]={"运输船",3,false},
+			[31]={"驱逐舰",3,false},
+			[32]={"巡洋舰",3,false},
+			[33]={"战列舰",3,false},
+			[34]={"航空母舰",3,false},
 		},
 		armyIndex={},
-		navyIndex={},
-		airIndex={},
 	}
 }
 for k,v in ipairs(Setting.Army.army) do
 	Setting.Army.armyIndex[v[1]]=k
-end
-for k,v in ipairs(Setting.Army.air) do
-	Setting.Army.airIndex[v[1]]=k
-end
-for k,v in ipairs(Setting.Army.navy) do
-	Setting.Army.navyIndex[v[1]]=k
 end
 for k,v in ipairs(Setting.Building.City) do
 	Setting.Building.CityIndex[v[1]]=k

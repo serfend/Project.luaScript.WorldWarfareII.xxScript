@@ -24,7 +24,7 @@ function pos:GetImageDescription(pixInterval,size)
 	size=size-1--大小为n^2
 	self.y,self.x=catchTouchPoint()
 		mSleep(200)
-		--tap(1515,180)
+		tap(1515,180)
 		mSleep(200)
 	mSleep(500)
 	keepScreen(true)--截图
@@ -40,7 +40,7 @@ function pos:GetImageDescription(pixInterval,size)
 			offsetX=pixInterval*col
 			offsetY=pixInterval*row
 			local posX,posY=self.x+offsetX,self.y+offsetY
-			--showRect(posX-15,posY-15,posX+15,posY+15,500)
+			showRect(posX-15,posY-15,posX+15,posY+15,500)
 			
 			local color=getColor(posX,posY)--获取样本点
 			local info=offsetX.."|"..offsetY.."|"..string.format("0x%06x",color)..","

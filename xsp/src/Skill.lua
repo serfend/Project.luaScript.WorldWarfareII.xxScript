@@ -237,10 +237,9 @@ function Skill:UseSkillsDirect()
 		end
 		ShowInfo.RunningInfo("技能队列"..self.NowUseSkillIndex.."/"..lastTimeQueueIndex)
 		if not self:UseSkill(self.useSkills[self.NowUseSkillIndex]) then
-			self.NowUseSkillIndex=self.NowUseSkillIndex-1--等待上一使用后使用下一个
+			--self.NowUseSkillIndex=self.NowUseSkillIndex-1--等待上一使用后使用下一个
 		end
 		if self.NowUseSkillIndex==lastTimeQueueIndex then
-			
 			break
 		end
 	end
@@ -372,7 +371,7 @@ function Skill:RollToBegin()
 end
 function Skill:SkillPageIsOn()
 	x, y = findColor({1413, 1013, 1600, 1060}, 
-	"0|0|0xcb9966,54|14|0x83725f,96|20|0xae8963,151|3|0xbe9265,110|3|0x9e8062",
+	"0|0|0xcb9966,54|14|0x83725f,96|20|0xae8963",
 	95, 0, 0, 0)
 	if x > -1 then
 		return true

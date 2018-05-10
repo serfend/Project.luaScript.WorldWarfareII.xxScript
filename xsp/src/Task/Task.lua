@@ -196,7 +196,7 @@ function Task:CheckTask(taskType)
 		else
 			ForkTask.ThreadTaskRefresh=true
 		end
-		conscript.nextTimeNeedMerge=true--不论完成什么任务，都进行合并，需修改
+		conscript.nextTimeNeedMerge=1--不论完成什么任务，都进行合并，需修改
 		ShowInfo.RunningInfo("完成"..taskType.."任务"..times)
 	end
 end

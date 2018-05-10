@@ -63,7 +63,7 @@ function Building:BuildingBegin()
 	Building:EnterCityList()
 	Building:FoldCity()
 	Building:RollToBegin()
-	local nextPos=155
+	local nextPos=200
 	local handleCityNum=0
 	while true do
 		handleCityNum=handleCityNum+1
@@ -193,9 +193,9 @@ function Building:NextPage()
 	swip(300,950,300,390)
 	mSleep(200)
 end
-function Building:LastPage()
-	swip(300,390,300,950)
-	mSleep(200)
+function Building:LastPage(step)
+	swip(300,390,300,950,step)
+	if step==nil then mSleep(200) end
 end
 function Building:AtBottom()
 		x, y = findColor({0, 994, 539, 1079}, 

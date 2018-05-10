@@ -70,7 +70,7 @@ function MainTask:Run()
 		end
 	end
 	if self.nextTimeCompleteTaskEnableMergeArmy and AnyTaskComplete then
-		conscript.nextTimeNeedMerge=true--完成任务后立即合并以减少队列占用
+		conscript.nextTimeNeedMerge=1--完成任务后立即合并以减少队列占用
 		self.nextTimeCompleteTaskEnableMergeArmy=false
 	end
 	Form:Exit()
